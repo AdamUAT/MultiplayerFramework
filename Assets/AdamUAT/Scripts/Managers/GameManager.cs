@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -15,7 +16,15 @@ public class GameManager : MonoBehaviour
     //The manager that controlls all of the UI for the game.
     private UIManager uiManager;
 
+    //The manager that controlls the scene-related stuff.
+    private CustomSceneManager sceneManager;
+
     #endregion References
+
+    #region Variables
+    [SerializeField]
+    private CustomSceneManager.Scenes startupScene = CustomSceneManager.Scenes.MainMenu;
+    #endregion Variables
 
     private void Awake()
     {
@@ -50,6 +59,20 @@ public class GameManager : MonoBehaviour
         {
             gameState = gameObject.AddComponent<GameStateManager>();
         }
+
+        //Assign the UIManager
+        uiManager = GetComponent<UIManager>();
+        if (uiManager == null)
+        {
+            uiManager = gameObject.AddComponent<UIManager>();
+        }
+
+        //Assign the SceneManager
+        sceneManager = GetComponent<CustomSceneManager>();
+        if (sceneManager == null)
+        {
+            sceneManager = gameObject.AddComponent<CustomSceneManager>();
+        }
     }
 
     /// <summary>
@@ -59,6 +82,9 @@ public class GameManager : MonoBehaviour
     {
         //Starts the game in the TitleScreen.
         gameState.SetGameStateHard(GameStateManager.GameState.TitleScreen);
+
+        //Sets the starting scene to the MainMenu.
+        sceneManager.SetSceneHard(startupScene);
     }
 
     /// <summary>
