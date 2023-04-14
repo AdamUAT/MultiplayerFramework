@@ -14,7 +14,7 @@ public class GameStateManager : MonoBehaviour
     /// </summary>
     public void ChangeGameState(GameState newGameState)
     {
-        
+
     }
 
     /// <summary>

@@ -85,6 +85,10 @@ public class GameManager : MonoBehaviour
 
         //Sets the starting scene to the MainMenu.
         sceneManager.SetSceneHard(startupScene);
+
+        uiManager.DisableAllUIObjects();
+
+        uiManager.EnableUIObjectsWithGameState(GameStateManager.GameState.TitleScreen);
     }
 
     /// <summary>
@@ -93,5 +97,13 @@ public class GameManager : MonoBehaviour
     public void ChangeGameState(GameStateManager.GameState newGameState)
     {
         gameState.ChangeGameState(newGameState);
+    }
+
+    /// <summary>
+    /// Tells the UIManager that a new canvas UI object is in the scene.
+    /// </summary>
+    public void AddUIObjectToUIManager(UIObject uiObject)
+    {
+        uiManager.AddUIObject(uiObject);
     }
 }
