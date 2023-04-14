@@ -49,5 +49,13 @@ public class UIManager : MonoBehaviour
     {
         GameManager.instance.ChangeGameState(GameStateManager.GameState.MainMenu);
     }
+    public void MainMenuToOptions()
+    {
+        GameManager.instance.ChangeGameState(GameStateManager.GameState.Options);
+    }
+    public void OptionsToMainMenu()
+    {
+        GameManager.instance.ChangeGameState(GameStateManager.GameState.MainMenu);
+    }
     #endregion UI Element Functions
 }

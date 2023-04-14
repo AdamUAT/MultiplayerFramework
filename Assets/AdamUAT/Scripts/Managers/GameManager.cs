@@ -19,6 +19,8 @@ public class GameManager : MonoBehaviour
     //The manager that controlls the scene-related stuff.
     private CustomSceneManager sceneManager;
 
+    //The manager that controlls all the settings for the game.
+    private SettingsManager settingsManager;
     #endregion References
 
     #region Variables
@@ -73,6 +75,13 @@ public class GameManager : MonoBehaviour
         {
             sceneManager = gameObject.AddComponent<CustomSceneManager>();
         }
+
+        //Assign the SettingsManager
+        settingsManager = GetComponent<SettingsManager>();
+        if (settingsManager == null)
+        {
+            settingsManager = gameObject.AddComponent<SettingsManager>();
+        }
     }
 
     /// <summary>
@@ -89,6 +98,9 @@ public class GameManager : MonoBehaviour
         uiManager.DisableAllUIObjects();
 
         uiManager.EnableUIObjectsWithGameState(GameStateManager.GameState.TitleScreen);
+
+        //Load the settings from PlayerPrefs so the settings persist from the last game session.
+        settingsManager.LoadSettings();
     }
 
     /// <summary>
@@ -110,5 +122,38 @@ public class GameManager : MonoBehaviour
     public UIManager GetUIManager()
     {
         return uiManager;
+    }
+
+    public SettingsManager GetSettingsManager()
+    {
+        return settingsManager;
+    }
+
+    /// <summary>
+    /// Tells the SettingsManager that a new settingsObject is in the scene.
+    /// </summary>
+    public void AddSettingsObjectToSettingsManager(SettingsObject settingsObject)
+    {
+        settingsManager.AddSettingsObject(settingsObject);
+    }
+
+    /// <summary>
+    /// Loads the set settings from PlayerPrefs whenever the player pulls up the options screen.
+    /// </summary>
+    public void LoadSettings()
+    {
+        //Loads the values stored in PlayerPrefs into the values stored in SettingsManager so they can be accessed during gameplay.
+        settingsManager.LoadSettings();
+
+        //Update the current values of all the ui to match the current settings.
+        settingsManager.UpdateSettings();
+    }
+
+    /// <summary>
+    /// Saves the set settings to PlayerPrefs whenever the player closes the options screen.
+    /// </summary>
+    public void SaveSettings()
+    {
+        settingsManager.SaveSettings();
     }
 }

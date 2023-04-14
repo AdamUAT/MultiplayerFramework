@@ -20,6 +20,18 @@ public class GameStateManager : MonoBehaviour
         //Activate the UI with the new GameState.
         GameManager.instance.GetUIManager().EnableUIObjectsWithGameState(newGameState);
 
+        //The player is loading in options, so we will load in the set options.
+        if(newGameState == GameState.Options)
+        {
+            GameManager.instance.LoadSettings();
+        }
+
+        //The player is changing states when in the Options state.
+        if(gameState == GameState.Options)
+        {
+            GameManager.instance.SaveSettings();
+        }
+
         gameState = newGameState;
     }
 
