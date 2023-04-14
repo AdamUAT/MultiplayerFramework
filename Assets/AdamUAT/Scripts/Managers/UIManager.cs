@@ -43,4 +43,11 @@ public class UIManager : MonoBehaviour
             uiObject.EnableUIObject(gameState);
         }
     }
+
+    #region UI Element Functions
+    public void TitleToMainMenu()
+    {
+        GameManager.instance.ChangeGameState(GameStateManager.GameState.MainMenu);
+    }
+    #endregion UI Element Functions
 }

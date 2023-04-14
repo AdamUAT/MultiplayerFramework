@@ -14,7 +14,13 @@ public class GameStateManager : MonoBehaviour
     /// </summary>
     public void ChangeGameState(GameState newGameState)
     {
+        //Deactivate the UI with the old GameState.
+        GameManager.instance.GetUIManager().DisableUIObjectsWithGameState(gameState);
 
+        //Activate the UI with the new GameState.
+        GameManager.instance.GetUIManager().EnableUIObjectsWithGameState(newGameState);
+
+        gameState = newGameState;
     }
 
     /// <summary>

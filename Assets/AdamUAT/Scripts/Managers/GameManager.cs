@@ -106,4 +106,9 @@ public class GameManager : MonoBehaviour
     {
         uiManager.AddUIObject(uiObject);
     }
+
+    public UIManager GetUIManager()
+    {
+        return uiManager;
+    }
 }
