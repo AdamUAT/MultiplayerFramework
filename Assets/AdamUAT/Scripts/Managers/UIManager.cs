@@ -57,5 +57,17 @@ public class UIManager : MonoBehaviour
     {
         GameManager.instance.ChangeGameState(GameStateManager.GameState.MainMenu);
     }
+    public void MainMenuToCredits()
+    {
+        GameManager.instance.ChangeGameState(GameStateManager.GameState.Credits);
+    }
+    public void CreditsToMainMenu()
+    {
+        GameManager.instance.ChangeGameState(GameStateManager.GameState.MainMenu);
+    }
+    public void Quit()
+    {
+        GameManager.instance.QuitGame();
+    }
     #endregion UI Element Functions
 }
