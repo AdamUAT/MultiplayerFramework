@@ -11,38 +11,29 @@ public class SettingsManager : MonoBehaviour
     private List<SettingsObject> settingsObjects = new List<SettingsObject>();
 
     //Settings values
-    private float musicVolume;
-    private float effectsVolume;
+    public float musicVolume { get; set; }
+    private float effectsVolume { get; set; }
 
-    #region Getters and Setters
+    /// <summary>
+    /// Tells the SettingsManager that a new settingsObject is in the scene.
+    /// </summary>
     public void AddSettingsObject(SettingsObject settingsObject)
     {
         settingsObjects.Add(settingsObject);
     }
-    public float GetMusicVolume()
-    {
-        return musicVolume;
-    }
-    public void SetMusicVolume(float newMusicVolume)
-    {
-        musicVolume = newMusicVolume;
-    }
-    public float GetEffectsVolume()
-    {
-        return effectsVolume;
-    }
-    public void SetEffectsVolume(float newEffectsVolume)
-    {
-        effectsVolume = newEffectsVolume;
-    }
-    #endregion Getters and Setters
 
+    /// <summary>
+    /// Saves the current settings to PlayerPrefs
+    /// </summary>
     public void SaveSettings()
     {
         PlayerPrefs.SetFloat(Settings.musicVolume.ToString(), musicVolume);
         PlayerPrefs.SetFloat(Settings.effectsVolume.ToString(), effectsVolume);
     }
 
+    /// <summary>
+    /// Loads the settings from PlayerPrefs
+    /// </summary>
     public void LoadSettings()
     {
         musicVolume = PlayerPrefs.GetFloat(Settings.musicVolume.ToString(), 1.0f);

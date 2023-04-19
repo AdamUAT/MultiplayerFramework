@@ -9,7 +9,7 @@ public class SettingsObject : MonoBehaviour
 
     private void Awake()
     {
-        GameManager.instance.AddSettingsObjectToSettingsManager(this);
+        GameManager.instance.settingsManager.AddSettingsObject(this);
     }
 
     public SettingsManager.Settings GetAssociatedSetting()
@@ -19,6 +19,6 @@ public class SettingsObject : MonoBehaviour
 
     public void UpdateAssociatedSettingValues()
     {
-        GameManager.instance.GetSettingsManager().ModifySetting(gameObject, associatedSetting);
+        GameManager.instance.settingsManager.ModifySetting(gameObject, associatedSetting);
     }
 }
