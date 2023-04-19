@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 public class CustomSceneManager : MonoBehaviour
 {
     //The enum MUST have values that corrospond to the actual names of the scenes.
-    public enum Scenes { MainMenu}
+    public enum Scenes { MainMenu, Gameplay}
     //The current scene of the game.
     private Scenes currentScene;
 
@@ -17,6 +17,26 @@ public class CustomSceneManager : MonoBehaviour
     public void ChangeScene(Scenes newScene)
     {
 
+
+        currentScene = newScene;
+
+
+        //Loads the scene.
+        if (IsSceneValid(newScene.ToString()))
+        {
+            if (SceneManager.GetActiveScene() != SceneManager.GetSceneByName(newScene.ToString()))
+            {
+                SceneManager.LoadScene(newScene.ToString());
+            }
+            else
+            {
+                Debug.LogWarning("The scene passed into SetSceneHard in CustomSceneManager is the active scene, so it did not reload.");
+            }
+        }
+        else
+        {
+            Debug.LogError("The scene passed into SetSceneHard in CustomSceneManager is invalid and the scene did not load.");
+        }
     }
 
     /// <summary>
@@ -40,10 +60,6 @@ public class CustomSceneManager : MonoBehaviour
         }
         else
         {
-            if(newScene.ToString() != "MainMenu")
-            {
-                Debug.Log(newScene.ToString());
-            }
             Debug.LogError("The scene passed into SetSceneHard in CustomSceneManager is invalid and the scene did not load.");
         }
     }

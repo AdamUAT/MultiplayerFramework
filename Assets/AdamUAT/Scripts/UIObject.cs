@@ -10,7 +10,7 @@ public class UIObject : MonoBehaviour
 
     private void Awake()
     {
-        GameManager.instance.AddUIObjectToUIManager(this);
+        GameManager.instance.uiManager.AddUIObject(this);
     }
 
     /// <summary>

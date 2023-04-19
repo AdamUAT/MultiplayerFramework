@@ -6,6 +6,9 @@ public class UIManager : MonoBehaviour
 {
     private List<UIObject> uiObjects = new List<UIObject>();
 
+    /// <summary>
+    /// Tells the UIManager that a new canvas UI object is in the scene.
+    /// </summary>
     public void AddUIObject(UIObject uiObject)
     {
         uiObjects.Add(uiObject);
@@ -43,4 +46,36 @@ public class UIManager : MonoBehaviour
             uiObject.EnableUIObject(gameState);
         }
     }
+
+    #region UI Element Functions
+    public void TitleToMainMenu()
+    {
+        GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.MainMenu);
+    }
+    public void MainMenuToOptions()
+    {
+        GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Options);
+    }
+    public void OptionsToMainMenu()
+    {
+        GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.MainMenu);
+    }
+    public void MainMenuToCredits()
+    {
+        GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Credits);
+    }
+    public void CreditsToMainMenu()
+    {
+        GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.MainMenu);
+    }
+    public void Quit()
+    {
+        GameManager.instance.QuitGame();
+    }
+    //Since it directly goes from MainMenu to Gameplay, it is singleplayer.
+    public void MainMenuToGameplay()
+    {
+        GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Gameplay);
+    }
+    #endregion UI Element Functions
 }
