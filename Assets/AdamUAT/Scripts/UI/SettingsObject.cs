@@ -2,14 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SettingsObject : MonoBehaviour
+public class SettingsObject : UIObject
 {
     [SerializeField]
     private SettingsManager.Settings associatedSetting;
 
-    private void Awake()
+    protected override void Awake()
     {
         GameManager.instance.settingsManager.AddSettingsObject(this);
+        base.Awake();
     }
 
     public SettingsManager.Settings GetAssociatedSetting()
