@@ -15,6 +15,14 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Tells the UIManager that a canvas UI object is being removed from the scene.
+    /// </summary>
+    public void RemoveUIObject(UIObject uiObject)
+    {
+        uiObjects.Remove(uiObject);
+    }
+
+    /// <summary>
     /// Disables all the UI objects in the current scene.
     /// </summary>
     public void DisableAllUIObjects()
@@ -46,36 +54,4 @@ public class UIManager : MonoBehaviour
             uiObject.EnableUIObject(gameState);
         }
     }
-
-    #region UI Element Functions
-    public void TitleToMainMenu()
-    {
-        GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.MainMenu);
-    }
-    public void MainMenuToOptions()
-    {
-        GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Options);
-    }
-    public void OptionsToMainMenu()
-    {
-        GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.MainMenu);
-    }
-    public void MainMenuToCredits()
-    {
-        GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Credits);
-    }
-    public void CreditsToMainMenu()
-    {
-        GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.MainMenu);
-    }
-    public void Quit()
-    {
-        GameManager.instance.QuitGame();
-    }
-    //Since it directly goes from MainMenu to Gameplay, it is singleplayer.
-    public void MainMenuToGameplay()
-    {
-        GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Gameplay);
-    }
-    #endregion UI Element Functions
 }

@@ -14,4 +14,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/AdamUAT/Scenes/Gameplay.unity
     guid: 5cc149c7435bf0f4fa1bbe6fbd2c7799
+  - enabled: 1
+    path: Assets/AdamUAT/Scenes/Lobby.unity
+    guid: fcb3afb57787a1a44b7dc597da653e1a
   m_configObjects: {}

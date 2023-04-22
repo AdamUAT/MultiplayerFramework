@@ -29,6 +29,8 @@ public class GameManager : MonoBehaviour
     #region Variables
     [SerializeField]
     private CustomSceneManager.Scenes startupScene = CustomSceneManager.Scenes.MainMenu;
+    [SerializeField]
+    private GameStateManager.GameState startupGameState = GameStateManager.GameState.TitleScreen;
     #endregion Variables
 
     private void Awake()
@@ -100,17 +102,21 @@ public class GameManager : MonoBehaviour
     private void InitializeVariables()
     {
         //Starts the game in the TitleScreen.
-        gameStateManager.SetGameStateHard(GameStateManager.GameState.TitleScreen);
+        gameStateManager.SetGameStateHard(startupGameState);
 
         //Sets the starting scene to the MainMenu.
         sceneManager.SetSceneHard(startupScene);
 
         uiManager.DisableAllUIObjects();
 
-        uiManager.EnableUIObjectsWithGameState(GameStateManager.GameState.TitleScreen);
+        uiManager.EnableUIObjectsWithGameState(startupGameState);
 
         //Load the settings from PlayerPrefs so the settings persist from the last game session.
         settingsManager.LoadSettings();
+
+        multiplayerManager.PrimeRelay();
+
+        multiplayerManager.playerName = "Player" + UnityEngine.Random.Range(100, 1000);
     }
 
     public void QuitGame()
