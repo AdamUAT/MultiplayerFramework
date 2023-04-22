@@ -48,6 +48,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   startupScene: 0
+  startupGameState: 0
 --- !u!114 &5353777787112807925
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -77,11 +78,16 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 5353777787112807927}
-    PlayerPrefab: {fileID: 0}
-    NetworkPrefabs: []
+    PlayerPrefab: {fileID: 4710119405264378596, guid: 3e407619af6f2a341a7591a0e8f47303, type: 3}
+    NetworkPrefabs:
+    - Override: 0
+      Prefab: {fileID: 4710119405264378596, guid: 3e407619af6f2a341a7591a0e8f47303, type: 3}
+      SourcePrefabToOverride: {fileID: 0}
+      SourceHashToOverride: 0
+      OverridingTargetPrefab: {fileID: 0}
     TickRate: 30
     ClientConnectionBufferTimeout: 10
-    ConnectionApproval: 0
+    ConnectionApproval: 1
     ConnectionData: 
     EnableTimeResync: 0
     TimeResyncInterval: 30

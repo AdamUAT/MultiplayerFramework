@@ -30,7 +30,6 @@ public class MultiplayerManager : NetworkBehaviour
     public event EventHandler OnConnectingFinished;
     public event EventHandler OnCreateLobbyFailed;
 
-
     //public UnityTransport unityTransport { get; private set; }
 
 
@@ -62,29 +61,77 @@ public class MultiplayerManager : NetworkBehaviour
 
     public void StartHost()
     {
+        NetworkManager.Singleton.ConnectionApprovalCallback += MultiplayerManager_ConnectoinApprovalCallback;
+        NetworkManager.Singleton.OnClientConnectedCallback += MultiplayerManager_OnClientConnectedCallback;
+
         NetworkManager.Singleton.StartHost();
     }
+
+    /// <summary>
+    /// Code to run when a joins the game, including the host.
+    /// </summary>
+    private void MultiplayerManager_OnClientConnectedCallback(ulong clientID)
+    {
     
+    }
+
+    /// <summary>
+    /// The delegate that determines if a player is allowed to connect to this game instance.
+    /// </summary>
+    private void MultiplayerManager_ConnectoinApprovalCallback(NetworkManager.ConnectionApprovalRequest connectionApprovalRequest, NetworkManager.ConnectionApprovalResponse connectionApprovalResponse)
+    {
+        //Only approve if the game is still in the lobby. This denies late joins.
+        if (GameManager.instance.gameStateManager.currentGameState == GameStateManager.GameState.Lobby)
+        {
+            connectionApprovalResponse.Approved = true;
+            connectionApprovalResponse.CreatePlayerObject = true;
+        }
+        else
+        {
+            connectionApprovalResponse.Approved = false;
+        }
+    }
+
+
     public void StartClient()
     {
         NetworkManager.Singleton.StartHost();
+
+        //Only add listener on the server
+        if (IsServer)
+        {
+            NetworkManager.Singleton.OnClientDisconnectCallback += NetworkManager_OnClientDisconnectCallback;
+        }
     }
+
+    /// <summary>
+    /// The code for handling a client disconnect.
+    /// </summary>
+    private void NetworkManager_OnClientDisconnectCallback(ulong clientID)
+    {
+        //Only call on the server.
+        if(OwnerClientId == clientID)
+        {
+
+        }
+    }
+
     /*
 try
 {
-    //CreateAllocationAsync's parameter is the number of players, not including the host.
-    Allocation allocation = await RelayService.Instance.CreateAllocationAsync(1);
+//CreateAllocationAsync's parameter is the number of players, not including the host.
+Allocation allocation = await RelayService.Instance.CreateAllocationAsync(1);
 
-    RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
-    //RelayServerData relayServerData1 = new RelayServerData();
+RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
+//RelayServerData relayServerData1 = new RelayServerData();
 
-    NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
+NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
 
-    NetworkManager.Singleton.StartHost();
+NetworkManager.Singleton.StartHost();
 }
 catch(RelayServiceException exception)
 {
-    Debug.LogException(exception);
+Debug.LogException(exception);
 }
 */
 
@@ -116,7 +163,7 @@ catch(RelayServiceException exception)
         {
             joinedLobby = await LobbyService.Instance.QuickJoinLobbyAsync();
 
-            StartHost();
+            StartClient();
         }
         catch(LobbyServiceException exception)
         {
@@ -194,6 +241,9 @@ catch(RelayServiceException exception)
             if(joinedLobby != null)
             {
                 await LobbyService.Instance.RemovePlayerAsync(joinedLobby.Id, AuthenticationService.Instance.PlayerId);
+
+                //Stops all multiplayer.
+                NetworkManager.Singleton.Shutdown();
             }
         }
         catch(LobbyServiceException exception)
