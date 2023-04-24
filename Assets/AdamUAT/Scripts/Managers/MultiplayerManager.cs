@@ -12,10 +12,11 @@ using Unity.Services.Core;
 using Unity.Services.Lobbies.Models;
 using Unity.Services.Lobbies;
 using System;
+using System.Threading.Tasks;
 
 public class MultiplayerManager : NetworkBehaviour
 {
-    private const int MAX_PLAYERS = 2;
+    private const int MAX_PLAYERS = 10;
 
     public Lobby joinedLobby { get; private set; }
 
@@ -30,6 +31,8 @@ public class MultiplayerManager : NetworkBehaviour
     public event EventHandler OnConnectingFinished;
     public event EventHandler OnHostDisconnected;
     public event EventHandler OnCreateLobbyFailed;
+    public event EventHandler OnJoinRandomLobbyFailed;
+    public event EventHandler OnJoinSpecificLobbyFailed;
     public event EventHandler UpdateLobby;
 
     //public UnityTransport unityTransport { get; private set; }
@@ -59,7 +62,6 @@ public class MultiplayerManager : NetworkBehaviour
     {
         NetworkManager.Singleton.StartHost();
     }
-
 
     public void StartHost()
     {
@@ -162,6 +164,9 @@ Debug.LogException(exception);
         catch (LobbyServiceException exception)
         {
             Debug.LogException(exception);
+
+            //Get rid of the connecting text and tell the player that a lobby was not created.
+            OnConnectingFinished?.Invoke(this, EventArgs.Empty);
             OnCreateLobbyFailed?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -170,11 +175,17 @@ Debug.LogException(exception);
     {
         try
         {
+            OnConnectingStarted?.Invoke(this, EventArgs.Empty);
+
             joinedLobby = await LobbyService.Instance.QuickJoinLobbyAsync();
 
             StartClient();
+
+            GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Lobby);
+
+            OnConnectingFinished?.Invoke(this, EventArgs.Empty);
         }
-        catch(LobbyServiceException exception)
+        catch (LobbyServiceException exception)
         {
             Debug.LogException(exception);
         }
@@ -184,9 +195,15 @@ Debug.LogException(exception);
     {
         try
         {
+            OnConnectingStarted?.Invoke(this, EventArgs.Empty);
+
             joinedLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyCode);
 
             StartClient();
+
+            GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Lobby);
+
+            OnConnectingFinished?.Invoke(this, EventArgs.Empty);
         }
         catch (LobbyServiceException exception)
         {
@@ -204,17 +221,24 @@ Debug.LogException(exception);
     /// </summary>
     private void HandleHeartbeat()
     {
-        if(IsHost)
+        try
         {
-            heartbeatTimer -= Time.deltaTime;
-
-            if(heartbeatTimer <= 0)
+            if (IsHost && joinedLobby != null)
             {
-                float heartbeatTimerMax = 15f;
-                heartbeatTimer = heartbeatTimerMax;
+                heartbeatTimer -= Time.deltaTime;
 
-                LobbyService.Instance.SendHeartbeatPingAsync(joinedLobby.Id);
+                if (heartbeatTimer <= 0)
+                {
+                    float heartbeatTimerMax = 15f;
+                    heartbeatTimer = heartbeatTimerMax;
+
+                    LobbyService.Instance.SendHeartbeatPingAsync(joinedLobby.Id);
+                }
             }
+        }
+        catch(LobbyServiceException exception)
+        {
+            Debug.LogException(exception);
         }
     }
 
@@ -252,7 +276,7 @@ Debug.LogException(exception);
                 await LobbyService.Instance.RemovePlayerAsync(joinedLobby.Id, AuthenticationService.Instance.PlayerId);
 
                 //Stops all multiplayer.
-                NetworkManager.Singleton.Shutdown();
+                Disconnect();
             }
         }
         catch(LobbyServiceException exception)
@@ -265,5 +289,18 @@ Debug.LogException(exception);
     public void CallUpdateLobbyEvent()
     {
         UpdateLobby?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Disconnects the player from all netcode stuff.
+    /// </summary>
+    public void Disconnect()
+    {
+        NetworkManager.Singleton.Shutdown();
+
+        NetworkManager.Singleton.ConnectionApprovalCallback -= MultiplayerManager_ConnectoinApprovalCallback;
+        NetworkManager.Singleton.OnClientConnectedCallback -= MultiplayerManager_OnClientConnectedCallback;
+
+        joinedLobby = null;
     }
 }
