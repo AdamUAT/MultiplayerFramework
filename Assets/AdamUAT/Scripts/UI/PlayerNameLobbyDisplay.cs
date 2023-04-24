@@ -11,11 +11,10 @@ public class PlayerNameLobbyDisplay : UIObject
     {
         base.Awake();
 
-        NetworkManager.Singleton.OnClientConnectedCallback += UpdatePlayerListDisplay;
-        NetworkManager.Singleton.OnClientDisconnectCallback += UpdatePlayerListDisplay;
+        GameManager.instance.multiplayerManager.UpdateLobby += UpdatePlayerListDisplay;
     }
 
-    private void UpdatePlayerListDisplay(ulong obj)
+    private void UpdatePlayerListDisplay(object sender, System.EventArgs e)
     {
         TextMeshProUGUI playerListDisplay = GetComponent<TextMeshProUGUI>();
         if(playerListDisplay != null)
@@ -36,5 +35,6 @@ public class PlayerNameLobbyDisplay : UIObject
         {
             Debug.LogError("The playerListDisplay was not found.");
         }
+        
     }
 }

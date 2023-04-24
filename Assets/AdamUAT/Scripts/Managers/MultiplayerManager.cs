@@ -28,7 +28,9 @@ public class MultiplayerManager : NetworkBehaviour
 
     public event EventHandler OnConnectingStarted;
     public event EventHandler OnConnectingFinished;
+    public event EventHandler OnHostDisconnected;
     public event EventHandler OnCreateLobbyFailed;
+    public event EventHandler UpdateLobby;
 
     //public UnityTransport unityTransport { get; private set; }
 
@@ -72,7 +74,7 @@ public class MultiplayerManager : NetworkBehaviour
     /// </summary>
     private void MultiplayerManager_OnClientConnectedCallback(ulong clientID)
     {
-    
+        
     }
 
     /// <summary>
@@ -80,6 +82,7 @@ public class MultiplayerManager : NetworkBehaviour
     /// </summary>
     private void MultiplayerManager_ConnectoinApprovalCallback(NetworkManager.ConnectionApprovalRequest connectionApprovalRequest, NetworkManager.ConnectionApprovalResponse connectionApprovalResponse)
     {
+
         //Only approve if the game is still in the lobby. This denies late joins.
         if (GameManager.instance.gameStateManager.currentGameState == GameStateManager.GameState.Lobby)
         {
@@ -109,10 +112,10 @@ public class MultiplayerManager : NetworkBehaviour
     /// </summary>
     private void NetworkManager_OnClientDisconnectCallback(ulong clientID)
     {
-        //Only call on the server.
-        if(OwnerClientId == clientID)
+        //Is called if the host is shutting down
+        if(clientID == NetworkManager.ServerClientId)
         {
-
+            OnHostDisconnected?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -147,10 +150,16 @@ Debug.LogException(exception);
                 IsPrivate = isPrivate,
             });
 
-            StartHost();
+
+
             GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Lobby);
+
+            StartHost();
+
+            //Closes loading screen
+            OnConnectingFinished?.Invoke(this, EventArgs.Empty);
         }
-        catch(LobbyServiceException exception)
+        catch (LobbyServiceException exception)
         {
             Debug.LogException(exception);
             OnCreateLobbyFailed?.Invoke(this, EventArgs.Empty);
@@ -250,5 +259,11 @@ Debug.LogException(exception);
         {
             Debug.Log(exception);
         }
+    }
+
+    //Allows the PlayerController to call the UpdateLobby event.
+    public void CallUpdateLobbyEvent()
+    {
+        UpdateLobby?.Invoke(this, EventArgs.Empty);
     }
 }

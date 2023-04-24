@@ -18,6 +18,7 @@ public class PlayerName : UIObject
             playerName.onValueChanged.AddListener((string newText) =>
             {
                 GameManager.instance.multiplayerManager.playerName = newText;
+                GameManager.instance.multiplayerManager.CallUpdateLobbyEvent();
             });
         }
         else
