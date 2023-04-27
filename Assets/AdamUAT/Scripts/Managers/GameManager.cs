@@ -8,7 +8,8 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     //The singleton instance of the GameManager
-    public static GameManager instance { get; private set; } = null;
+    public static GameManager instance { get; private set; }
+    //This bool is used to tell if the gameManager has been assigned it's instance value or not, since the builds have it not equal to null for some reason.
 
     #region References
     //A reference to the script that controlls all of the game's state changes.
@@ -40,21 +41,17 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        Debug.Log(instance);
-
-        if (instance == null || instance == this)
+        if (instance == null)
         {
             //Make Singleton
             instance = this;
             DontDestroyOnLoad(gameObject);
-
 
             //Assign references first thing in the game.
             AssignReferences();
         }
         else
         {
-            Debug.Log("alksjdfl");
             Destroy(gameObject);
         }
     }

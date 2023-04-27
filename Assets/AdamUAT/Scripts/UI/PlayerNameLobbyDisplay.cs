@@ -16,6 +16,8 @@ public class PlayerNameLobbyDisplay : UIObject
 
     private void UpdatePlayerListDisplay(object sender, System.EventArgs e)
     {
+        Debug.Log("alkdjflas");
+
         TextMeshProUGUI playerListDisplay = GetComponent<TextMeshProUGUI>();
         if(playerListDisplay != null)
         {

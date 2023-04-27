@@ -22,7 +22,7 @@ public class PlayerName : UIObject
                 if (NetworkManager.Singleton.IsClient)
                 {
                     GameManager.instance.multiplayerManager.playerName = newText;
-                    GameManager.instance.multiplayerManager.CallUpdateLobbyEvent();
+                    //GameManager.instance.multiplayerManager.CallUpdateLobbyEvent();
                 }
             });
         }

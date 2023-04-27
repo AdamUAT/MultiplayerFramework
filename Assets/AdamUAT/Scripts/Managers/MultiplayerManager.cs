@@ -66,17 +66,45 @@ public class MultiplayerManager : NetworkBehaviour
     public void StartHost()
     {
         NetworkManager.Singleton.ConnectionApprovalCallback += MultiplayerManager_ConnectoinApprovalCallback;
-        NetworkManager.Singleton.OnClientConnectedCallback += MultiplayerManager_OnClientConnectedCallback;
+        //NetworkManager.Singleton.OnClientConnectedCallback += MultiplayerManager_OnClientConnectedCallback;
 
         NetworkManager.Singleton.StartHost();
     }
 
-    /// <summary>
-    /// Code to run when a joins the game, including the host.
-    /// </summary>
-    private void MultiplayerManager_OnClientConnectedCallback(ulong clientID)
+    public void StartClient()
     {
-        
+        //Decide if this client is allowed to connect to the host.
+        //NetworkManager.Singleton.ConnectionApprovalCallback += MultiplayerManager_ConnectoinApprovalCallback;
+
+
+        NetworkManager.Singleton.StartClient();
+
+        /*
+        //Only add listener on the server
+        if (IsServer)
+        {
+            NetworkManager.Singleton.OnClientDisconnectCallback += NetworkManager_OnClientDisconnectCallback;
+        }*/
+    }
+
+    public async void QuickJoin()
+    {
+        try
+        {
+            OnConnectingStarted?.Invoke(this, EventArgs.Empty);
+
+            joinedLobby = await LobbyService.Instance.QuickJoinLobbyAsync();
+
+            StartClient();
+
+            GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Lobby);
+
+            OnConnectingFinished?.Invoke(this, EventArgs.Empty);
+        }
+        catch (LobbyServiceException exception)
+        {
+            Debug.LogException(exception);
+        }
     }
 
     /// <summary>
@@ -84,7 +112,9 @@ public class MultiplayerManager : NetworkBehaviour
     /// </summary>
     private void MultiplayerManager_ConnectoinApprovalCallback(NetworkManager.ConnectionApprovalRequest connectionApprovalRequest, NetworkManager.ConnectionApprovalResponse connectionApprovalResponse)
     {
-
+        Debug.Log("alksjflkas");
+        connectionApprovalResponse.Approved = true;
+        /*
         //Only approve if the game is still in the lobby. This denies late joins.
         if (GameManager.instance.gameStateManager.currentGameState == GameStateManager.GameState.Lobby)
         {
@@ -94,51 +124,28 @@ public class MultiplayerManager : NetworkBehaviour
         else
         {
             connectionApprovalResponse.Approved = false;
-        }
+        }*/
     }
 
-
-    public void StartClient()
+    public async void JoinWithCode(string lobbyCode)
     {
-        NetworkManager.Singleton.StartHost();
-
-        //Only add listener on the server
-        if (IsServer)
+        try
         {
-            NetworkManager.Singleton.OnClientDisconnectCallback += NetworkManager_OnClientDisconnectCallback;
+            OnConnectingStarted?.Invoke(this, EventArgs.Empty);
+
+            joinedLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyCode);
+
+            StartClient();
+
+            GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Lobby);
+
+            OnConnectingFinished?.Invoke(this, EventArgs.Empty);
+        }
+        catch (LobbyServiceException exception)
+        {
+            Debug.LogException(exception);
         }
     }
-
-    /// <summary>
-    /// The code for handling a client disconnect.
-    /// </summary>
-    private void NetworkManager_OnClientDisconnectCallback(ulong clientID)
-    {
-        //Is called if the host is shutting down
-        if(clientID == NetworkManager.ServerClientId)
-        {
-            OnHostDisconnected?.Invoke(this, EventArgs.Empty);
-        }
-    }
-
-    /*
-try
-{
-//CreateAllocationAsync's parameter is the number of players, not including the host.
-Allocation allocation = await RelayService.Instance.CreateAllocationAsync(1);
-
-RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
-//RelayServerData relayServerData1 = new RelayServerData();
-
-NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
-
-NetworkManager.Singleton.StartHost();
-}
-catch(RelayServiceException exception)
-{
-Debug.LogException(exception);
-}
-*/
 
     public async void CreateLobby(string lobbyName, bool isPrivate)
     {
@@ -171,136 +178,140 @@ Debug.LogException(exception);
         }
     }
 
-    public async void QuickJoin()
-    {
-        try
-        {
-            OnConnectingStarted?.Invoke(this, EventArgs.Empty);
-
-            joinedLobby = await LobbyService.Instance.QuickJoinLobbyAsync();
-
-            StartClient();
-
-            GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Lobby);
-
-            OnConnectingFinished?.Invoke(this, EventArgs.Empty);
-        }
-        catch (LobbyServiceException exception)
-        {
-            Debug.LogException(exception);
-        }
-    }
-
-    public async void JoinWithCode(string lobbyCode)
-    {
-        try
-        {
-            OnConnectingStarted?.Invoke(this, EventArgs.Empty);
-
-            joinedLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyCode);
-
-            StartClient();
-
-            GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Lobby);
-
-            OnConnectingFinished?.Invoke(this, EventArgs.Empty);
-        }
-        catch (LobbyServiceException exception)
-        {
-            Debug.LogException(exception);
-        }
-    }
-
-    private void Update()
-    {
-        HandleHeartbeat();
-    }
-
+    /*
     /// <summary>
-    /// Lobbies will destroy themselves if there is no activity (called a heartbeat) in 30 seconds. This prevents that.
+    /// Code to run when a joins the game, including the host.
     /// </summary>
-    private void HandleHeartbeat()
+    private void MultiplayerManager_OnClientConnectedCallback(ulong clientID)
     {
-        try
+
+    }
+
+
+/*
+    /// <summary>
+    /// The code for handling a client disconnect.
+    /// </summary>
+    private void NetworkManager_OnClientDisconnectCallback(ulong clientID)
+    {
+        //Is called if the host is shutting down
+        if(clientID == NetworkManager.ServerClientId)
         {
-            if (IsHost && joinedLobby != null)
+            OnHostDisconnected?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /*
+try
+{
+//CreateAllocationAsync's parameter is the number of players, not including the host.
+Allocation allocation = await RelayService.Instance.CreateAllocationAsync(1);
+
+RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
+//RelayServerData relayServerData1 = new RelayServerData();
+
+NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
+
+NetworkManager.Singleton.StartHost();
+}
+catch(RelayServiceException exception)
+{
+Debug.LogException(exception);
+}
+*/
+    /*
+
+        private void Update()
+        {
+            HandleHeartbeat();
+        }
+
+        /// <summary>
+        /// Lobbies will destroy themselves if there is no activity (called a heartbeat) in 30 seconds. This prevents that.
+        /// </summary>
+        private void HandleHeartbeat()
+        {
+            try
             {
-                heartbeatTimer -= Time.deltaTime;
-
-                if (heartbeatTimer <= 0)
+                if (IsHost && joinedLobby != null)
                 {
-                    float heartbeatTimerMax = 15f;
-                    heartbeatTimer = heartbeatTimerMax;
+                    heartbeatTimer -= Time.deltaTime;
 
-                    LobbyService.Instance.SendHeartbeatPingAsync(joinedLobby.Id);
+                    if (heartbeatTimer <= 0)
+                    {
+                        float heartbeatTimerMax = 15f;
+                        heartbeatTimer = heartbeatTimerMax;
+
+                        LobbyService.Instance.SendHeartbeatPingAsync(joinedLobby.Id);
+                    }
                 }
             }
-        }
-        catch(LobbyServiceException exception)
-        {
-            Debug.LogException(exception);
-        }
-    }
-
-    /// <summary>
-    /// Closes the lobby so no one else can join.
-    /// </summary>
-    public async void DeleteLobby()
-    {
-        try
-        {
-            //If the lobby is active
-            if (joinedLobby != null)
+            catch(LobbyServiceException exception)
             {
-
-                await LobbyService.Instance.DeleteLobbyAsync(joinedLobby.Id);
-
-                joinedLobby = null;
+                Debug.LogException(exception);
             }
         }
-        catch(LobbyServiceException exception)
-        {
-            Debug.LogException(exception);
-        }
-    }
 
-    /// <summary>
-    /// Removes the player from the current lobby.
-    /// </summary>
-    public async void LeaveLobby()
-    {
-        try
+        /// <summary>
+        /// Closes the lobby so no one else can join.
+        /// </summary>
+        public async void DeleteLobby()
         {
-            if(joinedLobby != null)
+            try
             {
-                await LobbyService.Instance.RemovePlayerAsync(joinedLobby.Id, AuthenticationService.Instance.PlayerId);
+                //If the lobby is active
+                if (joinedLobby != null)
+                {
 
-                //Stops all multiplayer.
-                Disconnect();
+                    await LobbyService.Instance.DeleteLobbyAsync(joinedLobby.Id);
+
+                    joinedLobby = null;
+                }
+            }
+            catch(LobbyServiceException exception)
+            {
+                Debug.LogException(exception);
             }
         }
-        catch(LobbyServiceException exception)
+
+        /// <summary>
+        /// Removes the player from the current lobby.
+        /// </summary>
+        public async void LeaveLobby()
         {
-            Debug.Log(exception);
+            try
+            {
+                if(joinedLobby != null)
+                {
+                    await LobbyService.Instance.RemovePlayerAsync(joinedLobby.Id, AuthenticationService.Instance.PlayerId);
+
+                    //Stops all multiplayer.
+                    Disconnect();
+                }
+            }
+            catch(LobbyServiceException exception)
+            {
+                Debug.Log(exception);
+            }
         }
-    }
 
-    //Allows the PlayerController to call the UpdateLobby event.
-    public void CallUpdateLobbyEvent()
-    {
-        UpdateLobby?.Invoke(this, EventArgs.Empty);
-    }
+        //Allows the PlayerController to call the UpdateLobby event.
+        public void CallUpdateLobbyEvent()
+        {
+            UpdateLobby?.Invoke(this, EventArgs.Empty);
+        }
 
-    /// <summary>
-    /// Disconnects the player from all netcode stuff.
-    /// </summary>
-    public void Disconnect()
-    {
-        NetworkManager.Singleton.Shutdown();
+        /// <summary>
+        /// Disconnects the player from all netcode stuff.
+        /// </summary>
+        public void Disconnect()
+        {
+            NetworkManager.Singleton.Shutdown();
 
-        NetworkManager.Singleton.ConnectionApprovalCallback -= MultiplayerManager_ConnectoinApprovalCallback;
-        NetworkManager.Singleton.OnClientConnectedCallback -= MultiplayerManager_OnClientConnectedCallback;
+            NetworkManager.Singleton.ConnectionApprovalCallback -= MultiplayerManager_ConnectoinApprovalCallback;
+            NetworkManager.Singleton.OnClientConnectedCallback -= MultiplayerManager_OnClientConnectedCallback;
 
-        joinedLobby = null;
-    }
+            joinedLobby = null;
+        }
+    */
 }

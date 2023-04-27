@@ -18,7 +18,7 @@ public class PlayerController : Controller
     void Start()
     {
         //A specific event is called when the PlayerController is spawned, because the PlayerController isn't spawned in the same frame as when a client joins a server, so OnClientConnected event is too early.
-        GameManager.instance.multiplayerManager.CallUpdateLobbyEvent();
+        //GameManager.instance.multiplayerManager.CallUpdateLobbyEvent();
     }
 
     // Update is called once per frame
