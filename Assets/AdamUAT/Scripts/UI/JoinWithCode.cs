@@ -8,6 +8,8 @@ public class JoinWithCode : UIObject
 {
     [SerializeField]
     private TMP_InputField joinCode;
+    [SerializeField]
+    private TMP_InputField joinPassword;
 
     protected override void Awake()
     {
@@ -18,10 +20,17 @@ public class JoinWithCode : UIObject
         {
             if (joinCode != null)
             {
-                joinButton.onClick.AddListener(() =>
+                if (joinPassword != null)
                 {
-                    GameManager.instance.multiplayerManager.JoinWithCode(joinCode.text);
-                });
+                    joinButton.onClick.AddListener(() =>
+                    {
+                        GameManager.instance.multiplayerManager.JoinWithCode(joinCode.text, joinPassword.text);
+                    });
+                }
+                else
+                {
+                    Debug.LogError("The password input field is null.");
+                }
             }
             else
             {
