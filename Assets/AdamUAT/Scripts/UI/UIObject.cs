@@ -125,7 +125,8 @@ public class UIObject : MonoBehaviour
     }
     public void LobbyToHostOrJoin()
     {
-        GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.HostOrJoin);
+        //This also changes the GameState, after the async delay.
+        GameManager.instance.multiplayerManager.Disconnect();
     }
     #endregion UI Element Functions
 }

@@ -23,6 +23,18 @@ public class PlayerController : Controller
         return (playerName.Value.ToString());
     }
 
+    //The bool to tell if the player is ready or not. This is only used in the lobby.
+    private NetworkVariable<bool> isPlayerReady = new NetworkVariable<bool>(false);
+    public bool GetIsPlayerReady()
+    {
+        return(isPlayerReady.Value);
+    }
+    [ServerRpc(RequireOwnership = false)]
+    public void SetIsPlayerReadyServerRpc(bool _playerReady)
+    {
+        isPlayerReady.Value = _playerReady;
+    }
+
     #endregion PlayerData
 
     // Start is called before the first frame update
@@ -38,10 +50,17 @@ public class PlayerController : Controller
         }
 
         //A specific event is called when the PlayerController is spawned, because the PlayerController isn't spawned in the same frame as when a client joins a server, so OnClientConnected event is too early.
-        playerName.OnValueChanged += (FixedString64Bytes previousValue, FixedString64Bytes newValue) =>
+        playerName.OnValueChanged = (FixedString64Bytes previousValue, FixedString64Bytes newValue) =>
         {
             GameManager.instance.multiplayerManager.CallUpdateLobbyEvent();
         };
+
+        isPlayerReady.OnValueChanged = (bool previousValue, bool newValue) =>
+        {
+            GameManager.instance.multiplayerManager.CheckLobbyStateServerRpc();
+        };
+        //Also check it immediatly when a player connects.
+        GameManager.instance.multiplayerManager.CheckLobbyStateServerRpc();
 
         //Updates as soon as it spawns.
         GameManager.instance.multiplayerManager.CallUpdateLobbyEvent();
@@ -55,6 +74,9 @@ public class PlayerController : Controller
 
         //Updates the lobby after this is destroyed, removing it from the list.
         GameManager.instance.multiplayerManager.CallUpdateLobbyEvent();
+
+        //Also check the ready after a player disconnects.
+        GameManager.instance.multiplayerManager.CheckLobbyStateServerRpc();
     }
 
     // Update is called once per frame

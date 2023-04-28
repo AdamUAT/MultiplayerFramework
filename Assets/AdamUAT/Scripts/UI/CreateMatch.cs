@@ -25,7 +25,7 @@ public class CreateMatch : UIObject
             {
                 createMatchButton.onClick.AddListener(() =>
                 {
-                    GameManager.instance.multiplayerManager.CreateLobby(lobbyName.text, !isLobbyPublic.isOn);
+                    GameManager.instance.multiplayerManager.CreateLobby(lobbyName.text, !isLobbyPublic.isOn, lobbyPassword.text);
                 });
             }
             else

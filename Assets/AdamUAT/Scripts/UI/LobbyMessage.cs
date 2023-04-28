@@ -16,7 +16,7 @@ public class LobbyMessage : MonoBehaviour
         if(messageText != null)
         {
             //Whenever multiplayerManager calls showLobbyMessage, this recognizes it and changes the text to whatever was passed into it.
-            GameManager.instance.multiplayerManager.showLobbyMessage = (string message) => { gameObject.SetActive(true); messageText.text = message; };
+            GameManager.instance.multiplayerManager.showLobbyMessage += LobbyMessage_ShowLobbyMessage;
         }
         else
         {
@@ -33,5 +33,16 @@ public class LobbyMessage : MonoBehaviour
         }
 
         gameObject.SetActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        GameManager.instance.multiplayerManager.showLobbyMessage -= LobbyMessage_ShowLobbyMessage;
+    }
+
+    private void LobbyMessage_ShowLobbyMessage(string message)
+    {
+        gameObject.SetActive(true); 
+        messageText.text = message;
     }
 }

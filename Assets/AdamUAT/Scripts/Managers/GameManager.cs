@@ -26,8 +26,9 @@ public class GameManager : MonoBehaviour
 
     //The manager that controlls all the network related stuff
     public MultiplayerManager multiplayerManager { get; private set; }
+    [SerializeField] private GameObject multiplayerManagerReference;
 
-    //The NetworkManager cannot have any components that inherit from NetworkBehavior, so the NetworkManager is spawned as a seperate GameObject.
+    //The NetworkManager cannot have any components that inherit from NetworkBehaviour, so the NetworkManager is spawned as a seperate GameObject.
     //Since it is a singleton, there is no need for the GameManager to have a reference to the GameObject, just the prefab being spawned.
     [SerializeField] private GameObject networkManager;
     #endregion References
@@ -98,10 +99,15 @@ public class GameManager : MonoBehaviour
         }
 
         //Assign the multiplayerManager
-        multiplayerManager = GetComponent<MultiplayerManager>();
-        if(multiplayerManager == null)
+        //Since the multiplayerManager inherits from NetworkBehavior instead of MonoBehavior, it needs it's own gameObject.
+        if (multiplayerManagerReference != null)
         {
-            multiplayerManager = gameObject.AddComponent<MultiplayerManager>(); 
+            multiplayerManager = Instantiate(multiplayerManagerReference).GetComponent<MultiplayerManager>();
+            DontDestroyOnLoad (multiplayerManager);
+        }
+        else
+        {
+            Debug.LogError("No multiplayerManager prefab assigned.");
         }
 
         //Spawn the NetworkManager

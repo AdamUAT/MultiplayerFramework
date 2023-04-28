@@ -13,11 +13,17 @@ using Unity.Services.Lobbies.Models;
 using Unity.Services.Lobbies;
 using System;
 using System.Threading.Tasks;
+using System.Text;
+using Unity.Collections;
 
 public class MultiplayerManager : NetworkBehaviour
 {
     private const int MAX_PLAYERS = 10;
+    private const int MIN_PLAYERS = 1; //How many players have to be in a lobby before they are all allowed to ready.
+    private const int LOBBY_READY_DELAY = 5;
 
+    //This join code will almost never be used.
+    private const string RELAY_JOIN_CODE = "RelayJoinCode.";
     public Lobby joinedLobby { get; private set; }
 
     //The number of seconds until the host should send a heartbeat over the lobby.
@@ -65,13 +71,18 @@ public class MultiplayerManager : NetworkBehaviour
 
     public event EventHandler OnConnectingStarted;
     public event EventHandler OnConnectingFinished;
-    public event EventHandler OnHostDisconnected;
+    public event EventHandler OnDisconnectingStarted;
+    public event EventHandler OnDisconnectingFinished;
     //public event EventHandler OnCreateLobbyFailed;
     //public event EventHandler OnJoinRandomLobbyFailed;
     //public event EventHandler OnJoinSpecificLobbyFailed;
     public event EventHandler UpdateLobby;
     public delegate void ShowLobbyMessage(string message);
     public ShowLobbyMessage showLobbyMessage;
+    public Action<int> UpdateTimer;
+    private bool isLobbyReady = false;
+    private float lobbyReadyDelayTimer;
+    public string storedPassword { get; private set; }
 
     //Do all the one-time code relay stuff that allows it to work
     //multiplayerManager.PrimeRelay();
@@ -99,8 +110,10 @@ public class MultiplayerManager : NetworkBehaviour
 
     public void StartHost()
     {
-        NetworkManager.Singleton.ConnectionApprovalCallback += MultiplayerManager_ConnectoinApprovalCallback;
+        NetworkManager.Singleton.ConnectionApprovalCallback += MultiplayerManager_ConnectionApprovalCallback;
         //NetworkManager.Singleton.OnClientConnectedCallback += MultiplayerManager_OnClientConnectedCallback;
+
+
 
         NetworkManager.Singleton.StartHost();
     }
@@ -110,6 +123,7 @@ public class MultiplayerManager : NetworkBehaviour
         //Decide if this client is allowed to connect to the host.
         //NetworkManager.Singleton.ConnectionApprovalCallback += MultiplayerManager_ConnectoinApprovalCallback;
 
+        NetworkManager.Singleton.OnClientDisconnectCallback += MultiplayerManager_OnClientDisconnectCallback;
 
         NetworkManager.Singleton.StartClient();
 
@@ -129,6 +143,11 @@ public class MultiplayerManager : NetworkBehaviour
 
             joinedLobby = await LobbyService.Instance.QuickJoinLobbyAsync();
 
+            //Connect to relay.
+            string relayJoinCode = joinedLobby.Data[RELAY_JOIN_CODE].Value;
+            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(relayJoinCode);
+            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
+
             StartClient();
 
             GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Lobby);
@@ -145,32 +164,37 @@ public class MultiplayerManager : NetworkBehaviour
         }
     }
 
-    /// <summary>
-    /// The delegate that determines if a player is allowed to connect to this game instance.
-    /// </summary>
-    private void MultiplayerManager_ConnectoinApprovalCallback(NetworkManager.ConnectionApprovalRequest connectionApprovalRequest, NetworkManager.ConnectionApprovalResponse connectionApprovalResponse)
-    {        
-        //Only approve if the game is still in the lobby. This denies late joins.
-        if (GameManager.instance.gameStateManager.currentGameState == GameStateManager.GameState.Lobby)
-        {
-            connectionApprovalResponse.Approved = true;
-            connectionApprovalResponse.CreatePlayerObject = true;
-        }
-        else
-        {
-            connectionApprovalResponse.Approved = false;
-        }
-    }
-
-    public async void JoinWithCode(string lobbyCode)
+    public async void JoinWithCode(string lobbyCode, string password = "")
     {
         try
         {
             OnConnectingStarted?.Invoke(this, EventArgs.Empty);
 
-            joinedLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyCode);
+            //If the user doesn't provide a password, do not try to pass one in.
+            if (password == "" || password == null)
+            {
+                joinedLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyCode);
+            }
+            else
+            {
+                joinedLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyCode, new JoinLobbyByCodeOptions
+                {
+                    Password = password
+                });
+            }
+
+            //Joins the relay.
+            string relayJoinCode = joinedLobby.Data[RELAY_JOIN_CODE].Value;
+            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(relayJoinCode);
+            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
+
+            //This is what passes the password to the server.
+            //NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(password);
 
             StartClient();
+
+            //Sets the password the user put in as the password to display in the lobby.
+            storedPassword = password;
 
             GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Lobby);
 
@@ -194,21 +218,76 @@ public class MultiplayerManager : NetworkBehaviour
         }
     }
 
-    public async void CreateLobby(string lobbyName, bool isPrivate)
+    public async void JoinRelay()
+    {
+        try
+        {
+            string relayJoinCode = joinedLobby.Data[RELAY_JOIN_CODE].Value;
+
+            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(relayJoinCode);
+
+            RelayServerData relayServerData = new RelayServerData(joinAllocation, "dtls");
+
+            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
+        }
+        catch(RelayServiceException exception)
+        {
+            Debug.LogException(exception);
+        }
+    }
+
+    public async void CreateLobby(string lobbyName, bool isPrivate, string password = "")
     {
         try
         {
             //Opens loading screen
             OnConnectingStarted?.Invoke(this, EventArgs.Empty);
 
-            joinedLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, MAX_PLAYERS, new CreateLobbyOptions
+            //Checks to see if this lobby should have a password or not.
+            CreateLobbyOptions createLobbyOptions;
+            if (!isPrivate || password == "" || password == null)
             {
-                IsPrivate = isPrivate,
-            });
+                createLobbyOptions = new CreateLobbyOptions
+                {
+                    IsPrivate = isPrivate
+                };
+            }
+            else
+            {
+                createLobbyOptions = new CreateLobbyOptions
+                {
+                    IsPrivate = true,
+                    Password = password
+                };
+            }
+
+            joinedLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, MAX_PLAYERS, createLobbyOptions);
 
 
+            //Sets the password the user put in as the password to display in the lobby.
+            storedPassword = password;
 
             GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Lobby);
+
+
+            //CreateAllocationAsync's parameter is the number of players, not including the host.
+            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(MAX_PLAYERS - 1);
+
+            string relayJoinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+
+            await LobbyService.Instance.UpdateLobbyAsync(joinedLobby.Id, new UpdateLobbyOptions
+            {
+                Data = new Dictionary<string, DataObject> {
+                    { RELAY_JOIN_CODE, new DataObject(DataObject.VisibilityOptions.Member, relayJoinCode) }
+                 }
+            });
+
+            RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
+
+            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
+
+            NetworkManager.Singleton.StartHost();
+
 
             StartHost();
 
@@ -223,6 +302,10 @@ public class MultiplayerManager : NetworkBehaviour
             OnConnectingFinished?.Invoke(this, EventArgs.Empty);
             showLobbyMessage("Failed to create a lobby.");
             //OnCreateLobbyFailed?.Invoke(this, EventArgs.Empty);
+        }
+        catch (RelayServiceException exception)
+        {
+            Debug.LogException(exception);
         }
     }
 
@@ -249,42 +332,71 @@ public class MultiplayerManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Removes the player from the current lobby.
-    /// </summary>
-    public async void LeaveLobby()
-    {
-        try
-        {
-            if (joinedLobby != null)
-            {
-                await LobbyService.Instance.RemovePlayerAsync(joinedLobby.Id, AuthenticationService.Instance.PlayerId);
-
-                //Stops all multiplayer.
-                Disconnect();
-            }
-        }
-        catch (LobbyServiceException exception)
-        {
-            Debug.Log(exception);
-        }
-    }
-
-    /// <summary>
     /// Disconnects the player from all netcode stuff.
     /// </summary>
-    public void Disconnect()
+    public async void Disconnect()
     {
+        OnDisconnectingStarted?.Invoke(this, EventArgs.Empty);
+
         NetworkManager.Singleton.Shutdown();
 
-        NetworkManager.Singleton.ConnectionApprovalCallback -= MultiplayerManager_ConnectoinApprovalCallback;
+        NetworkManager.Singleton.ConnectionApprovalCallback -= MultiplayerManager_ConnectionApprovalCallback;
         //NetworkManager.Singleton.OnClientConnectedCallback -= MultiplayerManager_OnClientConnectedCallback;
+        NetworkManager.Singleton.OnClientConnectedCallback -= MultiplayerManager_OnClientDisconnectCallback;
 
-        joinedLobby = null;
+        //If the player is in a lobby, remove them from it.
+        if (joinedLobby != null)
+        {
+            try
+            {
+                if(isLobbyReady)
+                {
+                    isLobbyReady = false;
+                    UpdateTimer(-1);
+                }
+
+                await LobbyService.Instance.RemovePlayerAsync(joinedLobby.Id, AuthenticationService.Instance.PlayerId);
+
+                //If the host is the one that left the lobby, then delete the lobby.
+                if(IsHost)
+                {
+                    await LobbyService.Instance.DeleteLobbyAsync(joinedLobby.Id);
+                }
+            }
+            catch (LobbyServiceException exception)
+            {
+                Debug.LogException(exception);
+            }
+
+            joinedLobby = null;
+        }
+
+        //After the player has been disconnected, then change the game state to HostOrJoin. This works in both the Lobby and during GamePlay.
+        GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.HostOrJoin);
+
+        OnDisconnectingFinished?.Invoke(this, EventArgs.Empty);
     }
 
     private void Update()
     {
         HandleHeartbeat();
+
+        //Takes care of the lobby delay timer.
+        if(isLobbyReady)
+        {
+            lobbyReadyDelayTimer -= Time.deltaTime;
+            //The timer stops at -1. This is an illusion given to the players, allowing them to see a few frames of the timer at 0 before it switches scenes.
+            if(lobbyReadyDelayTimer > -1)
+            {
+                UpdateTimer((int)Mathf.Ceil(lobbyReadyDelayTimer));
+            }
+            else
+            {
+                //Changes the scene.
+                GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Gameplay);
+                isLobbyReady = false; //Stops the timer.
+            }
+        }
     }
 
     /// <summary>
@@ -328,6 +440,83 @@ public class MultiplayerManager : NetworkBehaviour
         }
     }
 
+    private void MultiplayerManager_OnClientDisconnectCallback(ulong clientID)
+    {
+        //Check if the host is disconnecting, and if so, trigger the disconnection.
+        if (clientID == NetworkManager.ServerClientId)
+        {
+            //DisconnectAllClientRpc();
+            showLobbyMessage("The host has disconnected.");
+
+            Disconnect();
+        }
+    }
+    
+    /// <summary>
+    /// The delegate that determines if a player is allowed to connect to this game instance.
+    /// </summary>
+    private void MultiplayerManager_ConnectionApprovalCallback(NetworkManager.ConnectionApprovalRequest connectionApprovalRequest, NetworkManager.ConnectionApprovalResponse connectionApprovalResponse)
+    {
+        //Only approve if the game is still in the lobby. This denies late joins.
+        if (GameManager.instance.gameStateManager.currentGameState == GameStateManager.GameState.Lobby)
+        {
+            connectionApprovalResponse.Approved = true;
+            connectionApprovalResponse.CreatePlayerObject = true;
+        }
+        else
+        {
+            connectionApprovalResponse.Approved = false;
+        }
+    }
+
+    /// <summary>
+    /// Checks if all players have readied up, and if so, starts a timer, or stops the timer.
+    /// </summary>
+    [ServerRpc(RequireOwnership = false)]
+    public void CheckLobbyStateServerRpc()
+    {
+        //Checks if there's enough players to be ready.
+        if(GameManager.instance.players.Count < MIN_PLAYERS)
+        {            
+            //Cancles the timer if it was running.
+            UpdateDelayTimerClientRpc(false);
+
+            return;
+        }
+
+        //Checks if all player's are ready.
+        foreach(PlayerController player in GameManager.instance.players)
+        {
+            //If any of the player's are not ready, then it stops.
+            if(!player.GetIsPlayerReady())
+            {
+                //Cancles the timer if it was running.
+                UpdateDelayTimerClientRpc(false);
+
+                return;
+            }
+        }
+
+        //If it reaches to hear, then the lobby is allowed to change.
+        UpdateDelayTimerClientRpc(true);
+    }
+
+    [ClientRpc]
+    public void UpdateDelayTimerClientRpc(bool isReady)
+    {
+        isLobbyReady = isReady;
+
+        //Cancles the timer.
+        if(isReady)
+        {
+            lobbyReadyDelayTimer = LOBBY_READY_DELAY;
+        }
+        else
+        {
+            UpdateTimer(-1);
+        }
+    }
+
     /*
     /// <summary>
     /// Code to run when a joins the game, including the host.
@@ -338,25 +527,5 @@ public class MultiplayerManager : NetworkBehaviour
     }
 
 
-/*
-
-
-    /*
-try
-{
-//CreateAllocationAsync's parameter is the number of players, not including the host.
-Allocation allocation = await RelayService.Instance.CreateAllocationAsync(1);
-
-RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
-//RelayServerData relayServerData1 = new RelayServerData();
-
-NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
-
-NetworkManager.Singleton.StartHost();
-}
-catch(RelayServiceException exception)
-{
-Debug.LogException(exception);
-}
 */
 }
