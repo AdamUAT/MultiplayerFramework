@@ -14,12 +14,16 @@ using Unity.Services.Lobbies;
 using System;
 using System.Threading.Tasks;
 using System.Text;
+using Unity.Collections;
 
 public class MultiplayerManager : NetworkBehaviour
 {
     private const int MAX_PLAYERS = 10;
     private const int MIN_PLAYERS = 1; //How many players have to be in a lobby before they are all allowed to ready.
     private const int LOBBY_READY_DELAY = 5;
+
+    //This join code will almost never be used.
+    private const string RELAY_JOIN_CODE = "RelayJoinCode.";
     public Lobby joinedLobby { get; private set; }
 
     //The number of seconds until the host should send a heartbeat over the lobby.
@@ -139,6 +143,11 @@ public class MultiplayerManager : NetworkBehaviour
 
             joinedLobby = await LobbyService.Instance.QuickJoinLobbyAsync();
 
+            //Connect to relay.
+            string relayJoinCode = joinedLobby.Data[RELAY_JOIN_CODE].Value;
+            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(relayJoinCode);
+            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
+
             StartClient();
 
             GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Lobby);
@@ -174,7 +183,10 @@ public class MultiplayerManager : NetworkBehaviour
                 });
             }
 
-            
+            //Joins the relay.
+            string relayJoinCode = joinedLobby.Data[RELAY_JOIN_CODE].Value;
+            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(relayJoinCode);
+            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
 
             //This is what passes the password to the server.
             //NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(password);
@@ -206,17 +218,21 @@ public class MultiplayerManager : NetworkBehaviour
         }
     }
 
-    public async Task<JoinAllocation> JoinRelay(string joinCode)
+    public async void JoinRelay()
     {
         try
         {
-            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
-            return joinAllocation;
+            string relayJoinCode = joinedLobby.Data[RELAY_JOIN_CODE].Value;
+
+            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(relayJoinCode);
+
+            RelayServerData relayServerData = new RelayServerData(joinAllocation, "dtls");
+
+            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
         }
         catch(RelayServiceException exception)
         {
             Debug.LogException(exception);
-            return default;
         }
     }
 
@@ -258,6 +274,13 @@ public class MultiplayerManager : NetworkBehaviour
             Allocation allocation = await RelayService.Instance.CreateAllocationAsync(MAX_PLAYERS - 1);
 
             string relayJoinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+
+            await LobbyService.Instance.UpdateLobbyAsync(joinedLobby.Id, new UpdateLobbyOptions
+            {
+                Data = new Dictionary<string, DataObject> {
+                    { RELAY_JOIN_CODE, new DataObject(DataObject.VisibilityOptions.Member, relayJoinCode) }
+                 }
+            });
 
             RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
 
