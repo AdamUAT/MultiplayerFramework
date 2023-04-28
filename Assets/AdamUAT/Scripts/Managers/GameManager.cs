@@ -1,13 +1,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
-{    
+{
     //The singleton instance of the GameManager
-    public static GameManager instance;
+    public static GameManager instance { get; private set; }
+    //This bool is used to tell if the gameManager has been assigned it's instance value or not, since the builds have it not equal to null for some reason.
 
     #region References
     //A reference to the script that controlls all of the game's state changes.
@@ -24,6 +26,10 @@ public class GameManager : MonoBehaviour
 
     //The manager that controlls all the network related stuff
     public MultiplayerManager multiplayerManager { get; private set; }
+
+    //The NetworkManager cannot have any components that inherit from NetworkBehavior, so the NetworkManager is spawned as a seperate GameObject.
+    //Since it is a singleton, there is no need for the GameManager to have a reference to the GameObject, just the prefab being spawned.
+    [SerializeField] private GameObject networkManager;
     #endregion References
 
     #region Variables
@@ -31,11 +37,14 @@ public class GameManager : MonoBehaviour
     private CustomSceneManager.Scenes startupScene = CustomSceneManager.Scenes.MainMenu;
     [SerializeField]
     private GameStateManager.GameState startupGameState = GameStateManager.GameState.TitleScreen;
+
+    [HideInInspector]
+    public List<PlayerController> players { get; set; }
     #endregion Variables
 
     private void Awake()
     {
-        if(instance == null)
+        if (instance == null)
         {
             //Make Singleton
             instance = this;
@@ -94,6 +103,16 @@ public class GameManager : MonoBehaviour
         {
             multiplayerManager = gameObject.AddComponent<MultiplayerManager>(); 
         }
+
+        //Spawn the NetworkManager
+        if (networkManager != null)
+        {
+            Instantiate(networkManager);
+        }
+        else
+        {
+            Debug.LogError("NetworkManager prefab not assigned to GameManager.");
+        }
     }
 
     /// <summary>
@@ -116,7 +135,9 @@ public class GameManager : MonoBehaviour
 
         multiplayerManager.PrimeRelay();
 
-        multiplayerManager.playerName = "Player" + UnityEngine.Random.Range(100, 1000);
+        multiplayerManager.SetLocalPlayerName("Player" + UnityEngine.Random.Range(100, 1000));
+
+        players = new List<PlayerController>();
     }
 
     public void QuitGame()

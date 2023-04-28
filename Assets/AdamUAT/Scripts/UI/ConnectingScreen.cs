@@ -6,14 +6,26 @@ public class ConnectingScreen : MonoBehaviour
 {
     private void Awake()
     {
-        GameManager.instance.multiplayerManager.OnConnectingStarted += MultiplayerManager_OnConnectingStarted;
+        GameManager.instance.multiplayerManager.OnConnectingStarted += ConnectingScreen_OnConnectingStarted;
+        GameManager.instance.multiplayerManager.OnConnectingFinished += ConnectingScreen_OnConnectingFinished;
 
         gameObject.SetActive(false);
     }
 
 
-    private void MultiplayerManager_OnConnectingStarted(object sender, System.EventArgs e)
+    private void ConnectingScreen_OnConnectingStarted(object sender, System.EventArgs e)
     {
         gameObject.SetActive(true);
+    }
+
+    private void ConnectingScreen_OnConnectingFinished(object sender, System.EventArgs e)
+    {
+        gameObject.SetActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        GameManager.instance.multiplayerManager.OnConnectingStarted -= ConnectingScreen_OnConnectingStarted;
+        GameManager.instance.multiplayerManager.OnConnectingFinished -= ConnectingScreen_OnConnectingFinished;
     }
 }

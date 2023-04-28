@@ -11,11 +11,17 @@ public class PlayerNameLobbyDisplay : UIObject
     {
         base.Awake();
 
-        NetworkManager.Singleton.OnClientConnectedCallback += UpdatePlayerListDisplay;
-        NetworkManager.Singleton.OnClientDisconnectCallback += UpdatePlayerListDisplay;
+        GameManager.instance.multiplayerManager.UpdateLobby += UpdatePlayerListDisplay;
     }
 
-    private void UpdatePlayerListDisplay(ulong obj)
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+
+        GameManager.instance.multiplayerManager.UpdateLobby -= UpdatePlayerListDisplay;
+    }
+
+    private void UpdatePlayerListDisplay(object sender, System.EventArgs e)
     {
         TextMeshProUGUI playerListDisplay = GetComponent<TextMeshProUGUI>();
         if(playerListDisplay != null)
@@ -24,17 +30,16 @@ public class PlayerNameLobbyDisplay : UIObject
             playerListDisplay.text = "";
 
             //Gets every single player on the clients.
-            foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
+            foreach (PlayerController player in GameManager.instance.players)
             {
-                PlayerController player = client.PlayerObject.GetComponent<PlayerController>();
-
                 //Outputs the player's name to a new line.
-                playerListDisplay.text += player.GetName() + "\n";
+                playerListDisplay.text += player.playerName.Value + "\n";
             }
         }
         else
         {
             Debug.LogError("The playerListDisplay was not found.");
         }
+        
     }
 }

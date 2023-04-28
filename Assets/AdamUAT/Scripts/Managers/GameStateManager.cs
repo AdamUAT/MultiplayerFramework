@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using System.Threading.Tasks;
 
 public class GameStateManager : MonoBehaviour
 {
@@ -69,6 +70,7 @@ public class GameStateManager : MonoBehaviour
         if(currentGameState == GameState.Lobby && newGameState == GameState.HostOrJoin)
         {
             //Remove the player from the lobby.
+            //Task.WhenAll(GameManager.instance.multiplayerManager.LeaveLobby());
             GameManager.instance.multiplayerManager.LeaveLobby();
         }
 
