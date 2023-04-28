@@ -17,7 +17,8 @@ using System.Threading.Tasks;
 public class MultiplayerManager : NetworkBehaviour
 {
     private const int MAX_PLAYERS = 10;
-
+    private const int MIN_PLAYERS = 1; //How many players have to be in a lobby before they are all allowed to ready.
+    private const int LOBBY_READY_DELAY = 5;
     public Lobby joinedLobby { get; private set; }
 
     //The number of seconds until the host should send a heartbeat over the lobby.
@@ -73,6 +74,10 @@ public class MultiplayerManager : NetworkBehaviour
     public event EventHandler UpdateLobby;
     public delegate void ShowLobbyMessage(string message);
     public ShowLobbyMessage showLobbyMessage;
+    public Action<int> UpdateTimer;
+    private bool isLobbyReady = false;
+    private float lobbyReadyDelayTimer;
+
 
     //Do all the one-time code relay stuff that allows it to work
     //multiplayerManager.PrimeRelay();
@@ -268,6 +273,12 @@ public class MultiplayerManager : NetworkBehaviour
         {
             try
             {
+                if(isLobbyReady)
+                {
+                    isLobbyReady = false;
+                    UpdateTimer(-1);
+                }
+
                 await LobbyService.Instance.RemovePlayerAsync(joinedLobby.Id, AuthenticationService.Instance.PlayerId);
 
                 //If the host is the one that left the lobby, then delete the lobby.
@@ -293,6 +304,23 @@ public class MultiplayerManager : NetworkBehaviour
     private void Update()
     {
         HandleHeartbeat();
+
+        //Takes care of the lobby delay timer.
+        if(isLobbyReady)
+        {
+            lobbyReadyDelayTimer -= Time.deltaTime;
+            //The timer stops at -1. This is an illusion given to the players, allowing them to see a few frames of the timer at 0 before it switches scenes.
+            if(lobbyReadyDelayTimer > -1)
+            {
+                UpdateTimer((int)Mathf.Ceil(lobbyReadyDelayTimer));
+            }
+            else
+            {
+                //Changes the scene.
+                GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Gameplay);
+                isLobbyReady = false; //Stops the timer.
+            }
+        }
     }
 
     /// <summary>
@@ -345,6 +373,54 @@ public class MultiplayerManager : NetworkBehaviour
             showLobbyMessage("The host has disconnected.");
 
             Disconnect();
+        }
+    }
+
+    /// <summary>
+    /// Checks if all players have readied up, and if so, starts a timer, or stops the timer.
+    /// </summary>
+    [ServerRpc(RequireOwnership = false)]
+    public void CheckLobbyStateServerRpc()
+    {
+        //Checks if there's enough players to be ready.
+        if(GameManager.instance.players.Count < MIN_PLAYERS)
+        {            
+            //Cancles the timer if it was running.
+            UpdateDelayTimerClientRpc(false);
+
+            return;
+        }
+
+        //Checks if all player's are ready.
+        foreach(PlayerController player in GameManager.instance.players)
+        {
+            //If any of the player's are not ready, then it stops.
+            if(!player.GetIsPlayerReady())
+            {
+                //Cancles the timer if it was running.
+                UpdateDelayTimerClientRpc(false);
+
+                return;
+            }
+        }
+
+        //If it reaches to hear, then the lobby is allowed to change.
+        UpdateDelayTimerClientRpc(true);
+    }
+
+    [ClientRpc]
+    public void UpdateDelayTimerClientRpc(bool isReady)
+    {
+        isLobbyReady = isReady;
+
+        //Cancles the timer.
+        if(isReady)
+        {
+            lobbyReadyDelayTimer = LOBBY_READY_DELAY;
+        }
+        else
+        {
+            UpdateTimer(-1);
         }
     }
 

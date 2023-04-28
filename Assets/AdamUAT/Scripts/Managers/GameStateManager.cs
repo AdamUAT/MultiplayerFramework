@@ -64,6 +64,7 @@ public class GameStateManager : MonoBehaviour
         {
             //Close the lobby so no one else can join the game.
             GameManager.instance.multiplayerManager.DeleteLobby();
+            GameManager.instance.sceneManager.ChangeSceneNetwork(CustomSceneManager.Scenes.Gameplay);
         }
 
         currentGameState = newGameState;
