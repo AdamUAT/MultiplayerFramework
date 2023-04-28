@@ -65,6 +65,8 @@ public class MultiplayerManager : NetworkBehaviour
 
     public event EventHandler OnConnectingStarted;
     public event EventHandler OnConnectingFinished;
+    public event EventHandler OnDisconnectingStarted;
+    public event EventHandler OnDisconnectingFinished;
     public event EventHandler OnHostDisconnected;
     //public event EventHandler OnCreateLobbyFailed;
     //public event EventHandler OnJoinRandomLobbyFailed;
@@ -249,37 +251,42 @@ public class MultiplayerManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Removes the player from the current lobby.
-    /// </summary>
-    public async void LeaveLobby()
-    {
-        try
-        {
-            if (joinedLobby != null)
-            {
-                await LobbyService.Instance.RemovePlayerAsync(joinedLobby.Id, AuthenticationService.Instance.PlayerId);
-
-                //Stops all multiplayer.
-                Disconnect();
-            }
-        }
-        catch (LobbyServiceException exception)
-        {
-            Debug.Log(exception);
-        }
-    }
-
-    /// <summary>
     /// Disconnects the player from all netcode stuff.
     /// </summary>
-    public void Disconnect()
+    public async void Disconnect()
     {
+        OnDisconnectingStarted?.Invoke(this, EventArgs.Empty);
+
         NetworkManager.Singleton.Shutdown();
 
         NetworkManager.Singleton.ConnectionApprovalCallback -= MultiplayerManager_ConnectoinApprovalCallback;
         //NetworkManager.Singleton.OnClientConnectedCallback -= MultiplayerManager_OnClientConnectedCallback;
 
-        joinedLobby = null;
+        //If the player is in a lobby, remove them from it.
+        if (joinedLobby != null)
+        {
+            try
+            {
+                await LobbyService.Instance.RemovePlayerAsync(joinedLobby.Id, AuthenticationService.Instance.PlayerId);
+
+                //If the host is the one that left the lobby, then delete the lobby.
+                if(IsHost)
+                {
+                    await LobbyService.Instance.DeleteLobbyAsync(joinedLobby.Id);
+                }
+            }
+            catch (LobbyServiceException exception)
+            {
+                Debug.LogException(exception);
+            }
+
+            joinedLobby = null;
+        }
+
+        //After the player has been disconnected, then change the game state to HostOrJoin. This works in both the Lobby and during GamePlay.
+        GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.HostOrJoin);
+
+        OnDisconnectingFinished?.Invoke(this, EventArgs.Empty);
     }
 
     private void Update()
