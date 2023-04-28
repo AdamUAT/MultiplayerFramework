@@ -67,7 +67,6 @@ public class MultiplayerManager : NetworkBehaviour
     public event EventHandler OnConnectingFinished;
     public event EventHandler OnDisconnectingStarted;
     public event EventHandler OnDisconnectingFinished;
-    public event EventHandler OnHostDisconnected;
     //public event EventHandler OnCreateLobbyFailed;
     //public event EventHandler OnJoinRandomLobbyFailed;
     //public event EventHandler OnJoinSpecificLobbyFailed;
@@ -112,6 +111,7 @@ public class MultiplayerManager : NetworkBehaviour
         //Decide if this client is allowed to connect to the host.
         //NetworkManager.Singleton.ConnectionApprovalCallback += MultiplayerManager_ConnectoinApprovalCallback;
 
+        NetworkManager.Singleton.OnClientDisconnectCallback += MultiplayerManager_OnClientDisconnectCallback;
 
         NetworkManager.Singleton.StartClient();
 
@@ -208,8 +208,6 @@ public class MultiplayerManager : NetworkBehaviour
                 IsPrivate = isPrivate,
             });
 
-
-
             GameManager.instance.gameStateManager.ChangeGameState(GameStateManager.GameState.Lobby);
 
             StartHost();
@@ -227,6 +225,8 @@ public class MultiplayerManager : NetworkBehaviour
             //OnCreateLobbyFailed?.Invoke(this, EventArgs.Empty);
         }
     }
+
+
 
     /// <summary>
     /// Closes the lobby so no one else can join.
@@ -261,6 +261,7 @@ public class MultiplayerManager : NetworkBehaviour
 
         NetworkManager.Singleton.ConnectionApprovalCallback -= MultiplayerManager_ConnectoinApprovalCallback;
         //NetworkManager.Singleton.OnClientConnectedCallback -= MultiplayerManager_OnClientConnectedCallback;
+        NetworkManager.Singleton.OnClientConnectedCallback -= MultiplayerManager_OnClientDisconnectCallback;
 
         //If the player is in a lobby, remove them from it.
         if (joinedLobby != null)
@@ -332,6 +333,18 @@ public class MultiplayerManager : NetworkBehaviour
         else
         {
             Debug.LogWarning("Cannot update the lobby since it isn't the active state.");
+        }
+    }
+
+    private void MultiplayerManager_OnClientDisconnectCallback(ulong clientID)
+    {
+        //Check if the host is disconnecting, and if so, trigger the disconnection.
+        if (clientID == NetworkManager.ServerClientId)
+        {
+            //DisconnectAllClientRpc();
+            showLobbyMessage("The host has disconnected.");
+
+            Disconnect();
         }
     }
 
