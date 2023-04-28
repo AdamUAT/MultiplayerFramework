@@ -21,8 +21,7 @@ public class PlayerName : UIObject
                 //This also only runs on clients, but since there's no dedicated server, instead using hosts, this shouldn't be a problem.
                 if (NetworkManager.Singleton.IsClient)
                 {
-                    GameManager.instance.multiplayerManager.playerName = newText;
-                    //GameManager.instance.multiplayerManager.CallUpdateLobbyEvent();
+                    GameManager.instance.multiplayerManager.SetLocalPlayerName(newText);
                 }
             });
         }
@@ -38,7 +37,7 @@ public class PlayerName : UIObject
 
         if (playerName != null)
         {
-            playerName.text = GameManager.instance.multiplayerManager.playerName;
+            playerName.text = GameManager.instance.multiplayerManager.GetLocalPlayerName();
         }
         else
         {

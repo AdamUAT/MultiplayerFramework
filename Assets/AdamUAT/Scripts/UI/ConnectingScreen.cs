@@ -22,4 +22,10 @@ public class ConnectingScreen : MonoBehaviour
     {
         gameObject.SetActive(false);
     }
+
+    private void OnDestroy()
+    {
+        GameManager.instance.multiplayerManager.OnConnectingStarted -= ConnectingScreen_OnConnectingStarted;
+        GameManager.instance.multiplayerManager.OnConnectingFinished -= ConnectingScreen_OnConnectingFinished;
+    }
 }

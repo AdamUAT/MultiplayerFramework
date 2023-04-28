@@ -14,10 +14,15 @@ public class PlayerNameLobbyDisplay : UIObject
         GameManager.instance.multiplayerManager.UpdateLobby += UpdatePlayerListDisplay;
     }
 
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+
+        GameManager.instance.multiplayerManager.UpdateLobby -= UpdatePlayerListDisplay;
+    }
+
     private void UpdatePlayerListDisplay(object sender, System.EventArgs e)
     {
-        Debug.Log("alkdjflas");
-
         TextMeshProUGUI playerListDisplay = GetComponent<TextMeshProUGUI>();
         if(playerListDisplay != null)
         {
@@ -25,12 +30,10 @@ public class PlayerNameLobbyDisplay : UIObject
             playerListDisplay.text = "";
 
             //Gets every single player on the clients.
-            foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
+            foreach (PlayerController player in GameManager.instance.players)
             {
-                PlayerController player = client.PlayerObject.GetComponent<PlayerController>();
-
                 //Outputs the player's name to a new line.
-                playerListDisplay.text += player.GetName() + "\n";
+                playerListDisplay.text += player.playerName.Value + "\n";
             }
         }
         else

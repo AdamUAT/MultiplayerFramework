@@ -14,7 +14,7 @@ public class UIObject : MonoBehaviour
         GameManager.instance.uiManager.AddUIObject(this);
     }
 
-    private void OnDestroy()
+    protected virtual void OnDestroy()
     {
         GameManager.instance.uiManager.RemoveUIObject(this);
     }

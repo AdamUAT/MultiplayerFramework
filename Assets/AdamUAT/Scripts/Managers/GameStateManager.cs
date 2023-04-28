@@ -63,7 +63,7 @@ public class GameStateManager : MonoBehaviour
         if(currentGameState == GameState.Lobby && newGameState == GameState.Gameplay)
         {
             //Close the lobby so no one else can join the game.
-            //GameManager.instance.multiplayerManager.DeleteLobby();
+            GameManager.instance.multiplayerManager.DeleteLobby();
         }
 
         //This means the player exited the lobby they were in.
@@ -71,7 +71,7 @@ public class GameStateManager : MonoBehaviour
         {
             //Remove the player from the lobby.
             //Task.WhenAll(GameManager.instance.multiplayerManager.LeaveLobby());
-            //GameManager.instance.multiplayerManager.LeaveLobby();
+            GameManager.instance.multiplayerManager.LeaveLobby();
         }
 
         currentGameState = newGameState;

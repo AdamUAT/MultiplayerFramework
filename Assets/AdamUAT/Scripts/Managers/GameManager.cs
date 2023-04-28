@@ -37,6 +37,9 @@ public class GameManager : MonoBehaviour
     private CustomSceneManager.Scenes startupScene = CustomSceneManager.Scenes.MainMenu;
     [SerializeField]
     private GameStateManager.GameState startupGameState = GameStateManager.GameState.TitleScreen;
+
+    [HideInInspector]
+    public List<PlayerController> players { get; set; }
     #endregion Variables
 
     private void Awake()
@@ -132,7 +135,9 @@ public class GameManager : MonoBehaviour
 
         multiplayerManager.PrimeRelay();
 
-        multiplayerManager.playerName = "Player" + UnityEngine.Random.Range(100, 1000);
+        multiplayerManager.SetLocalPlayerName("Player" + UnityEngine.Random.Range(100, 1000));
+
+        players = new List<PlayerController>();
     }
 
     public void QuitGame()
