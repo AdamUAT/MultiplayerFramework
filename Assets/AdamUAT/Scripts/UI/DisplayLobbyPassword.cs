@@ -13,8 +13,6 @@ public class DisplayLobbyPassword : UIObject
         if (passwordDisplay != null)
         {
             passwordDisplay.text = GameManager.instance.multiplayerManager.storedPassword;
-
-            Debug.Log(GameManager.instance.multiplayerManager.storedPassword);
         }
         else
         {

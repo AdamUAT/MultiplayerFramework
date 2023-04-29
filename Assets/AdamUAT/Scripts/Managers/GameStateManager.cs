@@ -43,8 +43,6 @@ public class GameStateManager : MonoBehaviour
         {
             //A server must be created, even in singleplayer, for the game to work. 
             GameManager.instance.multiplayerManager.StartSinglePlayer();
-
-            GameManager.instance.sceneManager.ChangeScene(CustomSceneManager.Scenes.Gameplay);
         }
 
         //If it transitions from MainMenu to HostOrJoin, then load the lobby scene.
@@ -63,8 +61,11 @@ public class GameStateManager : MonoBehaviour
         if(currentGameState == GameState.Lobby && newGameState == GameState.Gameplay)
         {
             //Close the lobby so no one else can join the game.
-            GameManager.instance.multiplayerManager.DeleteLobby();
-            GameManager.instance.sceneManager.ChangeSceneNetwork(CustomSceneManager.Scenes.Gameplay);
+            if (GameManager.instance.multiplayerManager.IsClientHost())
+            {
+                GameManager.instance.multiplayerManager.DeleteLobby();
+                GameManager.instance.sceneManager.ChangeSceneNetwork(CustomSceneManager.Scenes.Gameplay);
+            }
         }
 
         currentGameState = newGameState;
