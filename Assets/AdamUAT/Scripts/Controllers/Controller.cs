@@ -20,4 +20,24 @@ public class Controller : NetworkBehaviour
             }
         }
     }
+
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+
+        //When this controller is destroyed, it also then despawns the pawn attached to it.
+        //IMPORTANT: the controller MUST be destroyed on the host, or this won't work!
+        if(IsServer && pawn != null)
+        {
+            NetworkObject networkObject = pawn.GetComponent<NetworkObject>();
+            if(networkObject != null)
+            {
+                networkObject.Despawn();
+            }
+            else
+            {
+                Debug.LogError("No NetworkObject component on pawn.");
+            }
+        }
+    }
 }
