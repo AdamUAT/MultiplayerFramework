@@ -24,6 +24,9 @@ public class GameManager : MonoBehaviour
     //The manager that controlls all the settings for the game.
     public SettingsManager settingsManager { get; private set; }
 
+    //The manager that allows the pawn GameObject to be passed through Rpc.
+    public PawnPrefabsManager pawnPrefabsManager { get; private set; }
+
     //The manager that controlls all the network related stuff
     public MultiplayerManager multiplayerManager { get; private set; }
     [SerializeField] private GameObject multiplayerManagerReference;
@@ -41,6 +44,22 @@ public class GameManager : MonoBehaviour
 
     [HideInInspector]
     public List<PlayerController> players { get; set; }
+
+    private bool isPaused;
+    /// <summary>
+    /// Whether or not the game is paused.
+    /// </summary>
+    public bool IsPaused
+    {
+        get
+        {
+            return isPaused;
+        }
+        set
+        {
+            isPaused = value;
+        }
+    }
     #endregion Variables
 
     private void Awake()
@@ -98,6 +117,13 @@ public class GameManager : MonoBehaviour
             settingsManager = gameObject.AddComponent<SettingsManager>();
         }
 
+        //Assign the PawnPrefabsManager
+        pawnPrefabsManager = GetComponent<PawnPrefabsManager>();
+        if (pawnPrefabsManager == null)
+        {
+            pawnPrefabsManager = gameObject.AddComponent<PawnPrefabsManager>();
+        }
+
         //Assign the multiplayerManager
         //Since the multiplayerManager inherits from NetworkBehavior instead of MonoBehavior, it needs it's own gameObject.
         if (multiplayerManagerReference != null)
@@ -143,6 +169,8 @@ public class GameManager : MonoBehaviour
 
         multiplayerManager.SetLocalPlayerName("Player" + UnityEngine.Random.Range(100, 1000));
 
+        pawnPrefabsManager.CompileDictionary();
+
         players = new List<PlayerController>();
     }
 
@@ -152,5 +180,16 @@ public class GameManager : MonoBehaviour
     UnityEditor.EditorApplication.isPlaying = false;
 #endif
         Application.Quit();
+    }
+
+    private void Update()
+    {
+        if(multiplayerManager.IsClientHost())
+        {
+            multiplayerManager.UpdatePlayersClientRpc();
+        }
+
+
+        //Update all the AIs in the scene.
     }
 }

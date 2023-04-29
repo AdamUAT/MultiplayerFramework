@@ -105,12 +105,34 @@ public class MultiplayerManager : NetworkBehaviour
     /// </summary>
     public void StartSinglePlayer()
     {
+        NetworkManager.Singleton.ConnectionApprovalCallback = SinglePlayer_ConenctionApprovalCallback;
+
         NetworkManager.Singleton.StartHost();
+
+        //If it doesn't change scenes on the network, then the player prefab will be deleted.
+        GameManager.instance.sceneManager.ChangeSceneNetwork(CustomSceneManager.Scenes.Gameplay);
     }
 
+    /// <summary>
+    /// The connection approval callback must be made, even on singleplayer, because that determines if the player prefab is spawned or not.
+    /// </summary>
+    private void SinglePlayer_ConenctionApprovalCallback(NetworkManager.ConnectionApprovalRequest connectionApprovalRequest, NetworkManager.ConnectionApprovalResponse connectionApprovalResponse)
+    {
+        //Only approve if the game is not in the lobby and the connecting client is the server.
+        if (joinedLobby == null && connectionApprovalRequest.ClientNetworkId == NetworkManager.ServerClientId)
+        {
+            connectionApprovalResponse.Approved = true;
+            connectionApprovalResponse.CreatePlayerObject = true;
+        }
+        else
+        {
+            connectionApprovalResponse.Approved = false;
+        }
+    }
+    
     public void StartHost()
     {
-        NetworkManager.Singleton.ConnectionApprovalCallback += MultiplayerManager_ConnectionApprovalCallback;
+        NetworkManager.Singleton.ConnectionApprovalCallback = MultiplayerManager_ConnectionApprovalCallback;
         //NetworkManager.Singleton.OnClientConnectedCallback += MultiplayerManager_OnClientConnectedCallback;
 
 
@@ -342,7 +364,7 @@ public class MultiplayerManager : NetworkBehaviour
 
         NetworkManager.Singleton.ConnectionApprovalCallback -= MultiplayerManager_ConnectionApprovalCallback;
         //NetworkManager.Singleton.OnClientConnectedCallback -= MultiplayerManager_OnClientConnectedCallback;
-        NetworkManager.Singleton.OnClientConnectedCallback -= MultiplayerManager_OnClientDisconnectCallback;
+        NetworkManager.Singleton.OnClientDisconnectCallback -= MultiplayerManager_OnClientDisconnectCallback;
 
         //If the player is in a lobby, remove them from it.
         if (joinedLobby != null)
@@ -517,6 +539,30 @@ public class MultiplayerManager : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Allows other scripts to access whether or not they are part of the host or client.
+    /// </summary>
+    public bool IsClientHost()
+    {
+        return (IsHost);
+    }
+
+    /// <summary>
+    /// The clientRpc that tells all the clients to update their player input. 
+    /// This syncronizes all of them with the server and prevents the host from having an advantage.
+    /// </summary>
+    [ClientRpc]
+    public void UpdatePlayersClientRpc()
+    {
+        foreach (PlayerController player in GameManager.instance.players)
+        {
+            //Checks to see if this is the playerController that belongs to this client, and if it isn't the lobby or end.
+            if (player.gameObject == NetworkManager.Singleton.LocalClient.PlayerObject.gameObject && GameManager.instance.gameStateManager.currentGameState == GameStateManager.GameState.Gameplay)
+            {
+                player.DoClientUpdate();
+            }
+        }
+    }
     /*
     /// <summary>
     /// Code to run when a joins the game, including the host.
