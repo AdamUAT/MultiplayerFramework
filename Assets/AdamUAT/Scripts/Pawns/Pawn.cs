@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using Unity.Netcode;
+using Unity.Services.Lobbies.Models;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -24,6 +26,7 @@ public class Pawn : NetworkBehaviour
             }
         } 
     }
+
     private Movement movement;
     public Movement Movement
     {
@@ -42,6 +45,7 @@ public class Pawn : NetworkBehaviour
             }
         }
     }
+
     private Health health;
     public Health Health
     {
@@ -61,7 +65,8 @@ public class Pawn : NetworkBehaviour
         }
     }
 
-    public void AssignReferences()
+    [ClientRpc]
+    public void AssignReferencesClientRpc(NetworkObjectReference playerControllerReference)
     {
         //Assign the health component.
         Health = GetComponent<Health>();
@@ -76,5 +81,8 @@ public class Pawn : NetworkBehaviour
         {
             Movement = gameObject.AddComponent<DefaultMovement>();
         }
+
+        playerControllerReference.TryGet(out NetworkObject playerController);
+        Controller = playerController.GetComponent<Controller>();
     }
 }

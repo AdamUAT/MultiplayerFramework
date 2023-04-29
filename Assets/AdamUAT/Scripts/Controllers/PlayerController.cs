@@ -139,7 +139,7 @@ public class PlayerController : Controller
             Debug.LogError("No NetworkObject found on pawn. It has becom desynchronized from the network.");
         }
 
-        Pawn.AssignReferences();
+        Pawn.AssignReferencesClientRpc(GetComponent<NetworkObject>());
     }
 
     [ServerRpc(RequireOwnership = false)]

@@ -27,6 +27,9 @@ public class GameManager : MonoBehaviour
     //The manager that allows the pawn GameObject to be passed through Rpc.
     public PawnPrefabsManager pawnPrefabsManager { get; private set; }
 
+    //The manager that controls the camera(s).
+    public CameraManager cameraManager { get; private set; }
+
     //The manager that controlls all the network related stuff
     public MultiplayerManager multiplayerManager { get; private set; }
     [SerializeField] private GameObject multiplayerManagerReference;
@@ -124,6 +127,12 @@ public class GameManager : MonoBehaviour
             pawnPrefabsManager = gameObject.AddComponent<PawnPrefabsManager>();
         }
 
+        cameraManager = GetComponent<CameraManager>();
+        if(cameraManager == null)
+        {
+            cameraManager = gameObject.AddComponent<CameraManager>();
+        }
+
         //Assign the multiplayerManager
         //Since the multiplayerManager inherits from NetworkBehavior instead of MonoBehavior, it needs it's own gameObject.
         if (multiplayerManagerReference != null)
@@ -170,6 +179,14 @@ public class GameManager : MonoBehaviour
         multiplayerManager.SetLocalPlayerName("Player" + UnityEngine.Random.Range(100, 1000));
 
         pawnPrefabsManager.CompileDictionary();
+
+        cameraManager.CurrentCamera = Camera.main;
+        if(cameraManager.CurrentCamera == null)
+        {
+            //If there were no cameras in the scene, then this will create one.
+            GameObject newCamera = new GameObject("InstantiatedCamera");
+            cameraManager.CurrentCamera = newCamera.AddComponent<Camera>();
+        }
 
         players = new List<PlayerController>();
     }
