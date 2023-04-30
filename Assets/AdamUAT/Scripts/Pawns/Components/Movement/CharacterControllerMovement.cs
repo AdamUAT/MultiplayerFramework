@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(CharacterController))]
 public class CharacterControllerMovement : Movement
 {
     protected CharacterController characterController;
@@ -10,11 +11,6 @@ public class CharacterControllerMovement : Movement
     void Start()
     {
         characterController = GetComponent<CharacterController>();
-        if(characterController == null)
-        {
-            gameObject.AddComponent<CharacterController>();
-            Debug.LogWarning("No character controller was found on pawn, so one was created.");
-        }
     }
 
     public override void Move(Vector3 direction)
@@ -26,9 +22,11 @@ public class CharacterControllerMovement : Movement
     }
     public override void Move(Vector2 direction)
     {
-        //converts the direction into a unit vector.
-        Vector3.Normalize(direction);
+        Vector3 direction3 = new Vector3(direction.x, 0, direction.y);
 
-        characterController.Move(direction * speed * Time.deltaTime);
+        //converts the direction into a unit vector.
+        Vector3.Normalize(direction3);
+
+        characterController.Move(direction3 * speed * Time.deltaTime);
     }
 }
