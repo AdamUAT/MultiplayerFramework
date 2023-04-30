@@ -79,3 +79,5 @@ MonoBehaviour:
     pawnPrefab: {fileID: 0}
   - pawn: 1
     pawnPrefab: {fileID: 4831588705512996666, guid: 0cbce2e3635cb304caa4d0470dfacef7, type: 3}
+  - pawn: 2
+    pawnPrefab: {fileID: 8017361791737840600, guid: 3b4927689eee619428ac0d817a9d10df, type: 3}

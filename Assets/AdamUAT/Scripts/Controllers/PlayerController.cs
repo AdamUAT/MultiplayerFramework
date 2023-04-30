@@ -128,7 +128,7 @@ public class PlayerController : Controller
     [ServerRpc(RequireOwnership = false)]
     public void SpawnPawnOnServerRpc(PawnPrefabsManager.Pawns pawnToSpawn, Vector3 position, Quaternion rotation)
     {
-        Pawn = Instantiate(GameManager.instance.pawnPrefabsManager.pawnPrefabsDictionary.GetValueOrDefault(pawnToSpawn), position, rotation).GetComponent<Pawn>();
+        Pawn = Instantiate(GameManager.instance.pawnPrefabsManager.pawnPrefabsDictionary.GetValueOrDefault(pawnToSpawn), position, rotation).GetComponent<Pawn>();      
         NetworkObject networkObject = Pawn.GetComponent<NetworkObject>();
         if (networkObject != null)
         {

@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class Movement : PawnComponent
 {
+    [SerializeField]
+    [Tooltip("How fast this pawn moves, in units per second.")]
+    protected float speed = 10.0f;
+
     /// <summary>
     /// Moves the pawn in a unit direction.
     /// </summary>

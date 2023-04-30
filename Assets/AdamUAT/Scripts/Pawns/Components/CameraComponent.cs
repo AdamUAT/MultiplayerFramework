@@ -24,7 +24,6 @@ public class CameraComponent : PawnComponent
     private void Start()
     {
         //Checks if this component is on the pawn that this client uses.
-        Debug.Log(Parent.Controller);
         if(Parent.Controller.gameObject == NetworkManager.Singleton.LocalClient.PlayerObject.gameObject)
         {
             //Spawns a new camera that this pawn will use.
