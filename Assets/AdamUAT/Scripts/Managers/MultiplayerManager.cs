@@ -557,7 +557,7 @@ public class MultiplayerManager : NetworkBehaviour
         foreach (PlayerController player in GameManager.instance.players)
         {
             //Checks to see if this is the playerController that belongs to this client, and if it isn't the lobby or end.
-            if (player.gameObject == NetworkManager.Singleton.LocalClient.PlayerObject.gameObject && GameManager.instance.gameStateManager.currentGameState == GameStateManager.GameState.Gameplay)
+            if (player.IsLocalPlayer && GameManager.instance.gameStateManager.currentGameState == GameStateManager.GameState.Gameplay)
             {
                 player.DoClientUpdate();
             }

@@ -24,11 +24,14 @@ public class CameraComponent : PawnComponent
     private void Start()
     {
         //Checks if this component is on the pawn that this client uses.
-        if(Parent.Controller.gameObject == NetworkManager.Singleton.LocalClient.PlayerObject.gameObject)
+        if(Parent.Controller.IsLocalPlayer)
         {
-            //Spawns a new camera that this pawn will use.
-            GameObject newCamera = new GameObject("PlayerCamera");
-            GameManager.instance.cameraManager.CurrentCamera = newCamera.AddComponent<Camera>();
+            //If there is not a dedicated camera for the player, it will spawn a new one.
+            if (GameManager.instance.cameraManager.CurrentCamera == null || GameManager.instance.cameraManager.CurrentCamera.name != "PlayerCamera")
+            {
+                GameObject newCamera = new GameObject("PlayerCamera");
+                GameManager.instance.cameraManager.CurrentCamera = newCamera.AddComponent<Camera>();
+            }
         }
         else
         {

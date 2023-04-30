@@ -5,6 +5,7 @@ using Unity.Netcode;
 using UnityEngine;
 using Unity.Collections;
 using Unity.Services.Lobbies.Models;
+using UnityEngine.UIElements;
 
 public class PlayerController : Controller
 {
@@ -38,6 +39,8 @@ public class PlayerController : Controller
 
     #endregion PlayerData
 
+    public event EventHandler Interact;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -47,7 +50,7 @@ public class PlayerController : Controller
         if (GameManager.instance.multiplayerManager.joinedLobby != null)
         {
             //Checks to see if the spawned Network object is associated with the local client.
-            if (GetComponent<NetworkObject>() == NetworkManager.Singleton.LocalClient.PlayerObject)
+            if (IsLocalPlayer)
             {
                 //Set's the name of this player.
                 SetPlayerNameServerRpc(GameManager.instance.multiplayerManager.GetLocalPlayerName(true));
@@ -118,6 +121,10 @@ public class PlayerController : Controller
         {
             RotatePawnServerRpc(Input.GetAxis("Mouse X"));
         }
+        if(Input.GetKeyDown(GameManager.instance.inputManager.interactKey))
+        {
+            Interact?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     private void ProcessPausedInputs()
@@ -141,8 +148,57 @@ public class PlayerController : Controller
         {
             Debug.LogError("No NetworkObject found on pawn. It has becom desynchronized from the network.");
         }
+        
+        //Passes in the Player Controller via networkObject reference.
+        Pawn.AssignReferencesClientRpc(GetComponent<NetworkObject>());
+
+    }
+
+    /// <summary>
+    /// Switches which pawn this controller is using.
+    /// </summary>
+    [ServerRpc(RequireOwnership = false)]
+    public void SwitchPawnOnServerRpc(PawnPrefabsManager.Pawns pawnToSpawn)
+    {
+        Vector3 position = Pawn.transform.position;
+        Quaternion rotation = Pawn.transform.rotation;
+
+        NetworkObject networkObject = Pawn.GetComponent<NetworkObject>();
+
+        //Despawn the old pawn from the network.
+        if (networkObject != null)
+        {
+            networkObject.Despawn();
+        }
+        else
+        {
+            Debug.LogError("No NetworkObject found on pawn. It has becom desynchronized from the network.");
+        }
+
+        Pawn = Instantiate(GameManager.instance.pawnPrefabsManager.pawnPrefabsDictionary.GetValueOrDefault(pawnToSpawn), position, Quaternion.identity).GetComponent<Pawn>();
+
+        //Spawn the new pawn on the network.
+        networkObject = Pawn.GetComponent<NetworkObject>();
+        if (networkObject != null)
+        {
+            networkObject.Spawn();
+        }
+        else
+        {
+            Debug.LogError("No NetworkObject found on pawn. It has becom desynchronized from the network.");
+        }
 
         Pawn.AssignReferencesClientRpc(GetComponent<NetworkObject>());
+
+        //Sets initial rotation. This is done from the pawn itself, since some pawns rotate differently.
+        if (Pawn.Movement != null)
+        {
+            Pawn.Movement.Rotate(rotation.eulerAngles);
+        }
+        else
+        {
+            Debug.LogError("Pawn's movement component is null.");
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]
