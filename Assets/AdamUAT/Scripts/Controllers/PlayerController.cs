@@ -109,12 +109,15 @@ public class PlayerController : Controller
 
     private void ProcessInputs()
     {
-        //Only call the ServerRpc if the player is putting in input.
+        //Only call the ServerRpcs if the player is putting in input.
         if(Input.GetAxis("Vertical") != 0 || Input.GetAxis("Horizontal") != 0)
         {
             MovePawnServerRpc(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
         }
-
+        if(Input.GetAxis("Mouse X") != 0)
+        {
+            RotatePawnServerRpc(Input.GetAxis("Mouse X"));
+        }
     }
 
     private void ProcessPausedInputs()
@@ -150,6 +153,26 @@ public class PlayerController : Controller
             if (Pawn.Movement != null)
             {
                 Pawn.Movement.Move(new Vector2(horizontal, vertical));
+            }
+            else
+            {
+                Debug.LogError("Pawn's movement component is null.");
+            }
+        }
+        else
+        {
+            Debug.LogError("Player Controller has no associated pawn.");
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void RotatePawnServerRpc(float rotationAmount)
+    {
+        if(Pawn != null)
+        {
+            if (Pawn.Movement != null)
+            {
+                Pawn.Movement.Rotate(new Vector3(0, rotationAmount, 0));
             }
             else
             {

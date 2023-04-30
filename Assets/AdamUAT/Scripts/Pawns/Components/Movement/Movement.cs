@@ -13,4 +13,6 @@ public class Movement : PawnComponent
     /// </summary>
     public virtual void Move(Vector3 direction) { }
     public virtual void Move(Vector2 direction) { }
+
+    public virtual void Rotate(Vector3 direction) { }
 }
