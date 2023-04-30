@@ -17,6 +17,7 @@ public class PhysicsMovement : Movement
     /// </summary>
     public override void Move(Vector2 direction)
     {
-        rb.MovePosition(direction * speed * Time.deltaTime);
+        Vector3 direction3 = new Vector3(direction.x, 0, direction.y);
+        rb.MovePosition(Parent.transform.position + direction3 * speed * Time.deltaTime);
     }
 }
