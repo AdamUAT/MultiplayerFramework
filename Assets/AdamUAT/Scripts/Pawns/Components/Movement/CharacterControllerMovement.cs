@@ -6,10 +6,6 @@ public class CharacterControllerMovement : Movement
 {
     protected CharacterController characterController;
 
-    [SerializeField]
-    [Tooltip("How fast this pawn moves, in units per second.")]
-    protected float speed = 10.0f;
-
     // Start is called before the first frame update
     void Start()
     {
@@ -18,9 +14,6 @@ public class CharacterControllerMovement : Movement
         {
             gameObject.AddComponent<CharacterController>();
             Debug.LogWarning("No character controller was found on pawn, so one was created.");
-
-            //Initialize speed
-            speed = 10.0f;
         }
     }
 
