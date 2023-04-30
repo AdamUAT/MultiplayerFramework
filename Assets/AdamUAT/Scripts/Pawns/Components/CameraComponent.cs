@@ -10,7 +10,7 @@ public class CameraComponent : PawnComponent
     private Vector3 cameraTargetOffset;
 
     [SerializeField]
-    [Tooltip("The global rotation the camera should be.")]
+    [Tooltip("The local rotation the camera should be.")]
     private Quaternion cameraTargetRotation = new Quaternion();
 
     [SerializeField]
@@ -39,8 +39,8 @@ public class CameraComponent : PawnComponent
     private void LateUpdate()
     {
         //Smoothly moves the camera to where it should be.
-        GameManager.instance.cameraManager.CurrentCamera.gameObject.transform.position = Vector3.Lerp(GameManager.instance.cameraManager.CurrentCamera.gameObject.transform.position, gameObject.transform.TransformPoint(cameraTargetOffset), lerpSpeed * Time.deltaTime);
+        GameManager.instance.cameraManager.CurrentCamera.gameObject.transform.position = Vector3.Lerp(GameManager.instance.cameraManager.CurrentCamera.gameObject.transform.position, Parent.transform.TransformPoint(cameraTargetOffset), lerpSpeed * Time.deltaTime);
 
-        GameManager.instance.cameraManager.CurrentCamera.gameObject.transform.rotation = Quaternion.Lerp(GameManager.instance.cameraManager.CurrentCamera.gameObject.transform.rotation, cameraTargetRotation, lerpSpeed * Time.deltaTime);
+        GameManager.instance.cameraManager.CurrentCamera.gameObject.transform.rotation = Quaternion.Lerp(GameManager.instance.cameraManager.CurrentCamera.gameObject.transform.rotation, Parent.transform.rotation * cameraTargetRotation, lerpSpeed * Time.deltaTime);
     }
 }
