@@ -29,6 +29,8 @@ public class MultiplayerManager : NetworkBehaviour
     //The number of seconds until the host should send a heartbeat over the lobby.
     private float heartbeatTimer;
 
+    public bool isMultiplayer { get; private set; } = false;
+
     /// <summary>
     /// The name of the player. Currently, this is set up so it's a local variable set by the user.
     /// Later this could change if the game requires users to set up accounts.
@@ -111,6 +113,8 @@ public class MultiplayerManager : NetworkBehaviour
 
         //If it doesn't change scenes on the network, then the player prefab will be deleted.
         GameManager.instance.sceneManager.ChangeSceneNetwork(CustomSceneManager.Scenes.Gameplay);
+
+        isMultiplayer = false;
     }
 
     /// <summary>
@@ -138,6 +142,8 @@ public class MultiplayerManager : NetworkBehaviour
 
 
         NetworkManager.Singleton.StartHost();
+
+        isMultiplayer = true;
     }
 
     public void StartClient()
@@ -148,6 +154,8 @@ public class MultiplayerManager : NetworkBehaviour
         NetworkManager.Singleton.OnClientDisconnectCallback += MultiplayerManager_OnClientDisconnectCallback;
 
         NetworkManager.Singleton.StartClient();
+
+        isMultiplayer = true;
 
         /*
         //Only add listener on the server
@@ -401,7 +409,11 @@ public class MultiplayerManager : NetworkBehaviour
 
     private void Update()
     {
-        HandleHeartbeat();
+        //Only do the heartbeat in a lobby.
+        if (IsHost && joinedLobby != null)
+        {
+            HandleHeartbeat();
+        }
 
         //Takes care of the lobby delay timer.
         if(isLobbyReady)
@@ -428,17 +440,14 @@ public class MultiplayerManager : NetworkBehaviour
     {
         try
         {
-            if (IsHost && joinedLobby != null)
+            heartbeatTimer -= Time.deltaTime;
+
+            if (heartbeatTimer <= 0)
             {
-                heartbeatTimer -= Time.deltaTime;
+                float heartbeatTimerMax = 15f;
+                heartbeatTimer = heartbeatTimerMax;
 
-                if (heartbeatTimer <= 0)
-                {
-                    float heartbeatTimerMax = 15f;
-                    heartbeatTimer = heartbeatTimerMax;
-
-                    LobbyService.Instance.SendHeartbeatPingAsync(joinedLobby.Id);
-                }
+                LobbyService.Instance.SendHeartbeatPingAsync(joinedLobby.Id);
             }
         }
         catch (LobbyServiceException exception)
@@ -562,6 +571,17 @@ public class MultiplayerManager : NetworkBehaviour
                 player.DoClientUpdate();
             }
         }
+    }
+
+    /// <summary>
+    /// Disables all the UI except the one that should be showing on all clients.
+    /// </summary>
+    [ClientRpc]
+    public void InitializeUIClientRpc()
+    {
+        GameManager.instance.uiManager.DisableAllUIObjects();
+
+        GameManager.instance.uiManager.EnableUIObjectsWithGameState(GameManager.instance.gameStateManager.currentGameState);
     }
     /*
     /// <summary>

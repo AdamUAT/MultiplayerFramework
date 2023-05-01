@@ -46,36 +46,11 @@ public class Pawn : NetworkBehaviour
         }
     }
 
-    private Health health;
-    public Health Health
-    {
-        get
-        {
-            return health;
-        }
-        set
-        {
-            health = value;
-
-            //Since both Controller and Pawn set each other when they are set, it will cause an infinite loop if there isn't a check.
-            if (health != null && health.Parent != this)
-            {
-                health.Parent = this;
-            }
-        }
-    }
-
     [ClientRpc]
     public void AssignReferencesClientRpc(NetworkObjectReference playerControllerReference)
     {
-        //Assign the health component.
-        Health = GetComponent<Health>();
-        if (Health == null)
-        {
-            Health = gameObject.AddComponent<DefaultHealth>();
-        }
 
-        //Assign the UIManager
+        //Assign the movement component
         Movement = GetComponent<Movement>();
         if (Movement == null)
         {

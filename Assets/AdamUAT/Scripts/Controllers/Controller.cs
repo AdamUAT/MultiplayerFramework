@@ -21,6 +21,25 @@ public class Controller : NetworkBehaviour
         }
     }
 
+    private Health health;
+    public Health Health
+    {
+        get
+        {
+            return health;
+        }
+        set
+        {
+            health = value;
+
+            //Since both Controller and Pawn set each other when they are set, it will cause an infinite loop if there isn't a check.
+            if (health != null && health.Parent != this)
+            {
+                health.Parent = this;
+            }
+        }
+    }
+
     public override void OnDestroy()
     {
         base.OnDestroy();
@@ -38,6 +57,16 @@ public class Controller : NetworkBehaviour
             {
                 Debug.LogError("No NetworkObject component on pawn.");
             }
+        }
+    }
+
+    protected virtual void Start()
+    {
+        //Assign the health component to this controller.
+        Health = GetComponent<Health>();
+        if (Health == null)
+        {
+            Health = gameObject.AddComponent<DefaultHealth>();
         }
     }
 }

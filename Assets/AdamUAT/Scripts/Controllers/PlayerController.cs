@@ -42,8 +42,10 @@ public class PlayerController : Controller
     public event EventHandler Interact;
 
     // Start is called before the first frame update
-    void Start()
+    protected override void Start()
     {
+        base.Start();
+
         GameManager.instance.players.Add(this);
 
         //This code runs when the player joins the lobby.
@@ -105,7 +107,7 @@ public class PlayerController : Controller
             ProcessInputs();
         }
         else
-        {
+        { 
             ProcessPausedInputs();
         }
     }
@@ -128,17 +130,21 @@ public class PlayerController : Controller
     }
 
     private void ProcessPausedInputs()
-    {
+    {            
+        //The inputs that are allowed when paused but not allowed when dead.
+        if (GameManager.instance.gameStateManager.currentGameState != GameStateManager.GameState.Dead)
+        {
 
+        }
     }
 
-    /// <summary>
-    /// Spawns this pawn on the server.
-    /// </summary>
-    [ServerRpc(RequireOwnership = false)]
+        /// <summary>
+        /// Spawns this pawn on the server.
+        /// </summary>
+        [ServerRpc(RequireOwnership = false)]
     public void SpawnPawnOnServerRpc(PawnPrefabsManager.Pawns pawnToSpawn, Vector3 position, Quaternion rotation)
     {
-        Pawn = Instantiate(GameManager.instance.pawnPrefabsManager.pawnPrefabsDictionary.GetValueOrDefault(pawnToSpawn), position, rotation).GetComponent<Pawn>();      
+        Pawn = Instantiate(GameManager.instance.pawnPrefabsManager.pawnPrefabsDictionary.GetValueOrDefault(pawnToSpawn), position, rotation).GetComponent<Pawn>();
         NetworkObject networkObject = Pawn.GetComponent<NetworkObject>();
         if (networkObject != null)
         {
@@ -148,10 +154,18 @@ public class PlayerController : Controller
         {
             Debug.LogError("No NetworkObject found on pawn. It has becom desynchronized from the network.");
         }
-        
+
         //Passes in the Player Controller via networkObject reference.
         Pawn.AssignReferencesClientRpc(GetComponent<NetworkObject>());
-
+        PlayerHealth playerHealth = Health as PlayerHealth;
+        if (playerHealth != null)
+        {
+            playerHealth.CreateHealthUIClientRpc();
+        }
+        else
+        {
+            Debug.LogError("The health component on the playerController was not a playerHealth!");
+        }
     }
 
     /// <summary>
