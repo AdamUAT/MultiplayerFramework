@@ -15,7 +15,7 @@ public class PlayerStart : MonoBehaviour
         foreach (PlayerController player in GameManager.instance.players)
         {
             //only spawns a pawn for the local player.
-            if (player.gameObject == NetworkManager.Singleton.LocalClient.PlayerObject.gameObject)
+            if (player.IsLocalPlayer)
             {
                 player.SpawnPawnOnServerRpc(pawnToSpawn, transform.position, transform.rotation);
             }

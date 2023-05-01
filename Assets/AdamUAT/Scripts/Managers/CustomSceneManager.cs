@@ -75,7 +75,11 @@ public class CustomSceneManager : MonoBehaviour
         SceneManager.sceneLoaded -= OnSceneLoaded;
 
         //Initializes the UI for this scene.
-        InitializeUI();
+        //If the NetworkManager is active, it does the ClientRpc version.
+        if (GameManager.instance.multiplayerManager.isMultiplayer)
+            GameManager.instance.multiplayerManager.InitializeUIClientRpc();
+        else
+            InitializeUI();
     }
 
     /// <summary>
@@ -113,7 +117,10 @@ public class CustomSceneManager : MonoBehaviour
         SceneManager.sceneLoaded -= OnSceneLoadedHard;
 
         //Initializes the UI for this scene.
-        InitializeUI();
+        if (GameManager.instance.multiplayerManager.isMultiplayer)
+            GameManager.instance.multiplayerManager.InitializeUIClientRpc();
+        else
+            InitializeUI();
     }
 
     /// <summary>
@@ -139,7 +146,7 @@ public class CustomSceneManager : MonoBehaviour
     /// <summary>
     /// Disables all the UI except the one that should be showing.
     /// </summary>
-    private void InitializeUI()
+    public void InitializeUI()
     {
         GameManager.instance.uiManager.DisableAllUIObjects();
 

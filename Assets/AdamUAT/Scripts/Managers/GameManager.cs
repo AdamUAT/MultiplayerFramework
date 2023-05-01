@@ -30,6 +30,9 @@ public class GameManager : MonoBehaviour
     //The manager that controls the camera(s).
     public CameraManager cameraManager { get; private set; }
 
+    //The manager that controls all of the player's input keybinds.
+    public InputManager inputManager { get; private set; }
+
     //The manager that controlls all the network related stuff
     public MultiplayerManager multiplayerManager { get; private set; }
     [SerializeField] private GameObject multiplayerManagerReference;
@@ -131,6 +134,12 @@ public class GameManager : MonoBehaviour
         if(cameraManager == null)
         {
             cameraManager = gameObject.AddComponent<CameraManager>();
+        }
+
+        inputManager = GetComponent<InputManager>();
+        if(inputManager == null)
+        {
+            inputManager = gameObject.AddComponent<InputManager>();
         }
 
         //Assign the multiplayerManager

@@ -12,6 +12,11 @@ public class UIObject : MonoBehaviour
     protected virtual void Awake()
     {
         GameManager.instance.uiManager.AddUIObject(this);
+
+        if(!gameState.Contains(GameManager.instance.gameStateManager.currentGameState))
+        {
+            DisableUIObject();
+        }
     }
 
     protected virtual void OnDestroy()
@@ -126,6 +131,10 @@ public class UIObject : MonoBehaviour
     public void LobbyToHostOrJoin()
     {
         //This also changes the GameState, after the async delay.
+        GameManager.instance.multiplayerManager.Disconnect();
+    }
+    public void DeathToHostOrJoin()
+    {
         GameManager.instance.multiplayerManager.Disconnect();
     }
     #endregion UI Element Functions

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 public class GameStateManager : MonoBehaviour
 {
-    public enum GameState { TitleScreen, MainMenu, Options, Credits, Gameplay, HostOrJoin, Join, Host, Lobby }
+    public enum GameState { TitleScreen, MainMenu, Options, Credits, Gameplay, HostOrJoin, Join, Host, Lobby, Dead }
     //The current state of the game.
     public GameState currentGameState { get; private set; }
 
@@ -41,6 +41,8 @@ public class GameStateManager : MonoBehaviour
         //If it transitions directly from MainMenu to gameplay, it is singleplayer, since multiplayer goes through several other game states.
         if(currentGameState == GameState.MainMenu && newGameState == GameState.Gameplay)
         {
+            GameManager.instance.IsPaused = false;
+
             //A server must be created, even in singleplayer, for the game to work. 
             GameManager.instance.multiplayerManager.StartSinglePlayer();
         }
@@ -60,12 +62,25 @@ public class GameStateManager : MonoBehaviour
         //This means the game has started.
         if(currentGameState == GameState.Lobby && newGameState == GameState.Gameplay)
         {
+            GameManager.instance.IsPaused = false;
+
             //Close the lobby so no one else can join the game.
             if (GameManager.instance.multiplayerManager.IsClientHost())
             {
                 GameManager.instance.multiplayerManager.DeleteLobby();
                 GameManager.instance.sceneManager.ChangeSceneNetwork(CustomSceneManager.Scenes.Gameplay);
             }
+        }
+
+        if(currentGameState == GameState.Gameplay && newGameState == GameState.Dead)
+        {
+            GameManager.instance.IsPaused = true;
+        }
+
+        if(currentGameState == GameState.Dead && newGameState == GameState.HostOrJoin)
+        {
+            newGameState = GameState.MainMenu;
+            GameManager.instance.sceneManager.ChangeScene(CustomSceneManager.Scenes.MainMenu);
         }
 
         currentGameState = newGameState;
