@@ -4,15 +4,33 @@ using UnityEngine;
 
 public class AIController : Controller
 {
-    // Start is called before the first frame update
-    void Start()
+    protected float timeOfLastStateChange;
+
+    protected override void Start()
     {
-        
+        base.Start();
+
+        if (IsServer)
+        {
+            timeOfLastStateChange = Time.time;
+        }
     }
 
-    // Update is called once per frame
     void Update()
     {
-        
+        if (IsServer)
+        {
+            DoFSM();
+        }
+    }
+
+    protected virtual void DoFSM()
+    {
+
+    }
+
+    protected virtual void ChangeStateTime()
+    {
+        timeOfLastStateChange = Time.time;
     }
 }

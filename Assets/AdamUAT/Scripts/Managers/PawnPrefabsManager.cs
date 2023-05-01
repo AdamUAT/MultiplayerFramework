@@ -5,7 +5,7 @@ using static PawnPrefabsManager;
 
 public class PawnPrefabsManager : MonoBehaviour
 {
-    public enum Pawns { Default, OrthagonalPawn, PhysicsPawn, BlockyPersonPawn}
+    public enum Pawns { Default, OrthagonalPawn, PhysicsPawn, BlockyPersonPawn, CylinderPawn}
 
     [SerializeField]
     private List<PawnPrefabs> pawnPrefabs = new List<PawnPrefabs>();

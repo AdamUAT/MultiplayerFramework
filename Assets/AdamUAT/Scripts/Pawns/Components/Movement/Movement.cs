@@ -14,5 +14,7 @@ public class Movement : PawnComponent
     public virtual void Move(Vector3 direction) { }
     public virtual void Move(Vector2 direction) { }
 
+    public virtual void MoveTo(Vector3 position) { }
+
     public virtual void Rotate(Vector3 direction) { }
 }

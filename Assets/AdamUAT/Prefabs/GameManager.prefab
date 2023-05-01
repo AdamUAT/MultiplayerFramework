@@ -63,6 +63,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5245b0705b99c5e4b9e4e3457b271fa7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  audioMixer: {fileID: 24100000, guid: 4b2d959d248586c498d9823b4f3e16bb, type: 2}
 --- !u!114 &648604441385122999
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -84,6 +85,8 @@ MonoBehaviour:
     pawnPrefab: {fileID: 8017361791737840600, guid: 3b4927689eee619428ac0d817a9d10df, type: 3}
   - pawn: 3
     pawnPrefab: {fileID: 2804071502540959320, guid: df0bb916e5ebe4a41a7ea8b7cfda723b, type: 3}
+  - pawn: 4
+    pawnPrefab: {fileID: 6587539582759684920, guid: 81b6e545825c7414f8f4dae8851ace89, type: 3}
 --- !u!114 &-2851885318757659864
 MonoBehaviour:
   m_ObjectHideFlags: 0

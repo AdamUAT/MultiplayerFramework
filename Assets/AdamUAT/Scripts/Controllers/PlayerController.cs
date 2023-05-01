@@ -152,7 +152,7 @@ public class PlayerController : Controller
         }
         else
         {
-            Debug.LogError("No NetworkObject found on pawn. It has becom desynchronized from the network.");
+            Debug.LogError("No NetworkObject found on pawn. It has been desynchronized from the network.");
         }
 
         //Passes in the Player Controller via networkObject reference.

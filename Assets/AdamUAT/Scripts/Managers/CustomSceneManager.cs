@@ -151,7 +151,5 @@ public class CustomSceneManager : MonoBehaviour
         GameManager.instance.uiManager.DisableAllUIObjects();
 
         GameManager.instance.uiManager.EnableUIObjectsWithGameState(GameManager.instance.gameStateManager.currentGameState);
-
-        Debug.Log(GameManager.instance.gameStateManager.currentGameState);
     }
 }

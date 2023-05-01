@@ -1,18 +1,69 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.UI;
 
 public class SettingsManager : MonoBehaviour
 {
-    public enum Settings { musicVolume, effectsVolume }
+    public enum Settings { MusicVolume, EffectsVolume }
 
 
     private List<SettingsObject> settingsObjects = new List<SettingsObject>();
 
+    [SerializeField]
+    private AudioMixer audioMixer;
+
     //Settings values
-    public float musicVolume { get; set; }
-    private float effectsVolume { get; set; }
+    private float musicVolume;
+    public float MusicVolume
+    {
+        get
+        {
+            return musicVolume;
+        }
+        set
+        {
+            musicVolume = value;
+
+
+            if (musicVolume <= 0)
+            {
+                // If we are at zero, set our volume to -80 to mute it.
+                audioMixer.SetFloat("Sountrack_Volume", -80);
+            }
+            else
+            {
+                //The volue is the Log10 * 20.
+                audioMixer.SetFloat("Sountrack_Volume", Mathf.Log10(musicVolume) * 20);
+            }
+        }
+    }
+
+    private float effectsVolume;
+    public float EffectsVolume
+    {
+        get
+        {
+            return effectsVolume;
+        }
+        set
+        {
+            effectsVolume = value;
+
+
+            if (effectsVolume <= 0)
+            {
+                // If we are at zero, set our volume to -80 to mute it.
+                audioMixer.SetFloat("FX_Volume", -80);
+            }
+            else
+            {
+                //The volue is the Log10 * 20.
+                audioMixer.SetFloat("FX_Volume", Mathf.Log10(effectsVolume) * 20);
+            }
+        }
+    }
 
     /// <summary>
     /// Tells the SettingsManager that a new settingsObject is in the scene.
@@ -27,8 +78,8 @@ public class SettingsManager : MonoBehaviour
     /// </summary>
     public void SaveSettings()
     {
-        PlayerPrefs.SetFloat(Settings.musicVolume.ToString(), musicVolume);
-        PlayerPrefs.SetFloat(Settings.effectsVolume.ToString(), effectsVolume);
+        PlayerPrefs.SetFloat(Settings.MusicVolume.ToString(), MusicVolume);
+        PlayerPrefs.SetFloat(Settings.EffectsVolume.ToString(), EffectsVolume);
     }
 
     /// <summary>
@@ -36,8 +87,8 @@ public class SettingsManager : MonoBehaviour
     /// </summary>
     public void LoadSettings()
     {
-        musicVolume = PlayerPrefs.GetFloat(Settings.musicVolume.ToString(), 1.0f);
-        effectsVolume = PlayerPrefs.GetFloat(Settings.effectsVolume.ToString(), 1.0f);
+        MusicVolume = PlayerPrefs.GetFloat(Settings.MusicVolume.ToString(), 1.0f);
+        EffectsVolume = PlayerPrefs.GetFloat(Settings.EffectsVolume.ToString(), 1.0f);
     }
 
     /// <summary>
@@ -49,22 +100,22 @@ public class SettingsManager : MonoBehaviour
         {
             switch(settingsObject.GetAssociatedSetting())
             {
-                case Settings.musicVolume:
+                case Settings.MusicVolume:
                     Slider musicSlider = settingsObject.GetComponent<Slider>();
                     if(musicSlider != null)
                     {
-                        musicSlider.value = musicVolume;
+                        musicSlider.value = MusicVolume;
                     }
                     else
                     {
                         Debug.LogWarning("MusicVolume settings object does not have a slider component.");
                     }
                     break;
-                case Settings.effectsVolume:
+                case Settings.EffectsVolume:
                     Slider effectsSlider = settingsObject.GetComponent<Slider>();
                     if (effectsSlider != null)
                     {
-                        effectsSlider.value = effectsVolume;
+                        effectsSlider.value = EffectsVolume;
                     }
                     else
                     {
@@ -84,22 +135,22 @@ public class SettingsManager : MonoBehaviour
     {
         switch (associatedSetting)
         {
-            case Settings.musicVolume:
+            case Settings.MusicVolume:
                 Slider musicSlider = option.GetComponent<Slider>();
                 if(musicSlider != null)
                 {
-                    musicVolume = musicSlider.value;
+                    MusicVolume = musicSlider.value;
                 }
                 else
                 {
                     Debug.LogWarning("MusicVolume settings object does not have a slider component.");
                 }
                 break;
-            case Settings.effectsVolume:
+            case Settings.EffectsVolume:
                 Slider effectsSlider = option.GetComponent<Slider>();
                 if (effectsSlider != null)
                 {
-                    effectsVolume = effectsSlider.value;
+                    EffectsVolume = effectsSlider.value;
                 }
                 else
                 {
